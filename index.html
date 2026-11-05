@@ -1,0 +1,1367 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Offerte-inbox · AMZ Touringcars</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Bewust één lichte uitstraling, ook als het apparaat op donker staat. */
+/* Layout: dashboard. Bovenbalk met overzichtscijfers, daaronder links de inbox, midden de uitwerking van de gekozen aanvraag, rechts het reisprogramma. */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --sunken:#eef1f4; --line:#e2e7ec; --line-strong:#cfd6dd;
+  --fg:#111c26; --muted:#5d6b78; --accent:#1d3a8a; --accent-fg:#ffffff; --accent-soft:#e9eef9; --brand-red:#e2001a;
+  --warn:#8a5200; --warn-bg:#fdf3dc; --ok:#17784a; --urgent:#c4291c; --urgent-bg:#fdecea; --sel:#eef2fb;
+  --shadow:0 1px 2px rgba(17,28,38,.05),0 2px 8px rgba(17,28,38,.05);
+  --r:12px; --r-s:8px;
+  color-scheme:light;
+  --display:"Figtree","Segoe UI",Arial,sans-serif;
+  --body:"Figtree","Segoe UI",Arial,sans-serif;
+  --mono:"JetBrains Mono",Consolas,Menlo,monospace;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1720px;margin:0 auto;padding-inline:16px;padding-block:0 48px;display:flex;flex-direction:column;gap:16px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin-inline:-16px;padding:12px 16px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:34px;height:34px;flex:none}
+header.top h1{font:800 21px/1 var(--display);margin:0;letter-spacing:-.01em}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.cols{display:grid;grid-template-columns:340px minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1250px){.cols{grid-template-columns:320px minmax(0,1fr)}.right{grid-column:2}}
+@media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}.right{grid-column:auto}}
+.sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px)}
+@media (max-width:1250px){.sticky{position:static}}
+section{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+section.plain{background:none;border:0;box-shadow:none;padding:0;gap:8px}
+h2{font:700 12px/1.2 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+h3{font:800 22px/1.2 var(--display);margin:0;overflow-wrap:anywhere;letter-spacing:-.01em}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;color:var(--muted);min-width:0}
+input,textarea,select{font:inherit;font-size:15px;color:var(--fg);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-s);padding:8px 10px;width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
+input:hover,textarea:hover,select:hover{border-color:var(--muted)}
+input[type=color]{padding:3px;height:38px;width:48px;flex:none}
+textarea{resize:vertical;min-height:150px;line-height:1.45}
+select:focus-visible,input:focus-visible,textarea:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:600 14px var(--body);border-radius:var(--r-s);border:1px solid var(--line-strong);background:var(--surface);color:var(--fg);padding:8px 14px;cursor:pointer;transition:background .15s,border-color .15s}
+button:hover:not(:disabled){background:var(--sunken)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button.primary:hover:not(:disabled){background:var(--accent);filter:brightness(1.07)}
+button.small{font-size:13px;padding:6px 11px}
+button.danger{color:var(--urgent);border-color:color-mix(in srgb,var(--urgent) 45%,transparent)}
+button:disabled{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+@media (max-width:560px){.g2{grid-template-columns:minmax(0,1fr)}}
+.status{font-size:14px;color:var(--muted)}
+.status.err{color:var(--warn)}
+.leg{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;background:var(--sunken)}
+.leg input,.leg select{background:var(--surface)}
+.leg-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.leg-head strong{font:700 16px var(--display)}
+.leg-calc{font:500 13px var(--mono);color:var(--muted)}
+.leg-calc b{color:var(--fg);font-weight:500}
+.seg{display:inline-flex;gap:2px;padding:3px;background:var(--sunken);border:1px solid var(--line);border-radius:999px;align-self:flex-start;flex-wrap:wrap}
+.seg button{border:0;border-radius:999px;font-size:13px;font-weight:600;padding:5px 12px;background:none;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+a{color:var(--accent)}
+a.maps{font-size:13px;font-weight:600;text-decoration:none}
+a.maps:hover{text-decoration:underline}
+pre{font:400 13px/1.6 var(--mono);background:var(--sunken);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:14}
+.totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.totals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.totals div{background:var(--sunken);border-radius:10px;padding:10px 12px;min-width:0}
+.totals span{display:block;font-size:12px;color:var(--muted);font-weight:500}
+.totals b{font:600 17px var(--mono);font-variant-numeric:tabular-nums}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.flag{color:var(--warn);font-size:12px;font-weight:500}
+.naw{margin:0;font-size:15px;line-height:1.55;overflow-wrap:anywhere}
+.naw strong{display:block;font-weight:700}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.checks li{display:flex;gap:8px}
+.checks li::before{content:"\2713";color:var(--ok);font-weight:700}
+.checks.warns li::before{content:"!";color:var(--surface);background:var(--warn);border-radius:50%;flex:none;width:18px;height:18px;margin-top:2px;font:800 12px/18px var(--body);text-align:center}
+.sum{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.sum dt{color:var(--muted)}
+.sum dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;font-weight:500}
+.sum .gap{grid-column:1/-1;height:6px}
+label.check{flex-direction:row;align-items:center;gap:8px;font-size:14px;color:var(--fg);cursor:pointer}
+label.check input{width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.businfo{font-size:14px;margin:0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px 22px;padding:4px 4px 0}
+
+/* dashboard */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi:hover{border-color:var(--line-strong)}
+.kpi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.kpi span{font-size:13px;color:var(--muted);font-weight:500}
+.kpi b{font:800 28px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.kpi.hot b{color:var(--urgent)}
+.kpi[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.mode{font:700 11px var(--body);letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;gap:6px}
+.mode::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.mode.local{background:var(--warn-bg);color:var(--warn)}
+.who-pick{flex-direction:row;align-items:center;gap:8px;font-size:13px}
+.who-pick select{width:auto;min-width:150px;padding:6px 10px;font-size:14px}
+.peers{display:flex;align-items:center}
+.av{width:30px;height:30px;border-radius:50%;background:var(--who,var(--muted));color:#fff;font:700 12px/30px var(--body);text-align:center;flex:none;border:2px solid var(--surface);text-transform:uppercase}
+.peers .av{margin-left:-6px}
+.av.sm{width:22px;height:22px;font-size:10px;line-height:18px}
+.inbox ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.item{width:100%;text-align:left;display:flex;flex-direction:column;gap:4px;padding:11px 12px 11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:400 14px/1.4 var(--body);color:var(--fg);position:relative;overflow:hidden}
+.item::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--who,transparent)}
+.item:hover:not(:disabled){background:var(--sunken)}
+.item[aria-current="true"]{background:var(--sel);border-color:var(--accent)}
+.it-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.it-top b{font-weight:700;font-size:15px;overflow-wrap:anywhere;min-width:0}
+.it-meta{color:var(--muted);font-size:13px;overflow-wrap:anywhere;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.it-foot{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{font:700 11px var(--body);letter-spacing:.02em;white-space:nowrap;padding:3px 8px;border-radius:999px;background:var(--sunken);color:var(--muted);flex:none}
+.pill.Nieuw{background:var(--accent-soft);color:var(--accent)}
+.pill.Afgerond{background:none;box-shadow:inset 0 0 0 1px var(--line-strong)}
+.src{font:600 11px var(--body);padding:2px 7px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line-strong);color:var(--muted)}
+.spoed{display:flex;gap:6px;align-items:flex-start;color:var(--urgent);font-size:13px;font-weight:600}
+.spoed::before{content:"!";flex:none;width:17px;height:17px;border-radius:50%;background:var(--urgent);color:var(--surface);font:800 11px/17px var(--body);text-align:center;margin-top:1px}
+.task{background:var(--accent-soft);border-radius:8px;padding:7px 10px;font-size:13px}
+.task b{font-weight:700}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--who,var(--line));margin-right:4px}
+.empty{padding:28px 22px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.empty h3{font-size:20px}
+.empty p{margin:0;color:var(--muted);max-width:52ch}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.log time{font-family:var(--mono);font-size:12px;margin-right:6px}
+.spoedbox{background:var(--urgent-bg);border-radius:8px;padding:9px 12px;display:flex;flex-direction:column;gap:4px}
+.colrow{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:8px;align-items:center}
+.notice{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:14px}
+.banner{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--accent-soft);color:var(--fg);border-radius:10px;padding:9px 12px;font-size:14px}
+.draftbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600}
+
+
+/* AMZ Touringcars */
+.logo{display:inline-flex;flex-direction:column;line-height:.86;user-select:none}
+.logo .amz{font:900 26px/0.9 var(--display);color:var(--brand-red);letter-spacing:-.01em}
+.logo .tc{font:800 10.5px/1.1 var(--display);color:var(--accent);letter-spacing:.06em}
+.divider{width:1px;height:28px;background:var(--line-strong)}
+header.top h1{color:var(--accent)}
+.kpi b{color:var(--accent)}
+.kpi.hot b{color:var(--urgent)}
+.claim{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.handoff{background:var(--sunken);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.telform .grid{gap:10px 12px}
+@media (max-width:860px){.logo .amz{font-size:22px}.logo .tc{font-size:9px}.divider{display:none}}
+
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.slim{width:auto;padding:6px 9px;font-size:14px}
+.dhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px}
+.paper{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+.paper .wide{grid-column:1/-1}
+.paper hr{grid-column:1/-1;border:0;border-top:1px dashed var(--line-strong);margin:4px 0}
+label.req>:first-child{}
+label.req::after{content:""}
+.req{position:relative}
+.req input{border-left:3px solid var(--accent)}
+.req input[aria-invalid="true"]{border-color:var(--urgent);box-shadow:0 0 0 3px var(--urgent-bg)}
+details.more{border-top:1px solid var(--line);padding-top:10px}
+details.more summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);list-style:none}
+details.more summary::before{content:"\203A";display:inline-block;margin-right:6px;transition:transform .15s}
+details.more[open] summary::before{transform:rotate(90deg)}
+.leegline{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;background:var(--sunken);border-radius:10px;padding:10px 12px;font-size:14px}
+.fl{display:inline-block;width:16px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:4px;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.fl-NL{background:linear-gradient(#ae1c28 33.3%,#fff 0 66.6%,#21468b 0)}
+.fl-BE{background:linear-gradient(90deg,#000 33.3%,#fdda24 0 66.6%,#ef3340 0)}
+.fl-DE{background:linear-gradient(#000 33.3%,#dd0000 0 66.6%,#ffce00 0)}
+.fl-FR{background:linear-gradient(90deg,#0055a4 33.3%,#fff 0 66.6%,#ef4135 0)}
+.fl-LU{background:linear-gradient(#ed2939 33.3%,#fff 0 66.6%,#00a1de 0)}
+.fl-x{background:var(--line-strong)}
+.lands{display:flex;flex-wrap:wrap;gap:4px 10px;font:500 12.5px var(--mono);color:var(--muted)}
+.totals small{display:block;font:500 11.5px var(--mono);color:var(--muted);margin-top:2px}
+.soortpill{font:600 11px var(--body);color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:999px}
+@media (max-width:560px){.paper{grid-template-columns:minmax(0,1fr)}}
+
+/* inloggen */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:var(--bg)}
+.login-card{width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:28px 24px;display:flex;flex-direction:column;gap:14px}
+.login-card .logo .amz{font-size:30px}
+.login-t{font:800 20px var(--display);color:var(--accent);letter-spacing:0;text-transform:none;margin:0 0 4px}
+.linkbtn{border:0;background:none;color:var(--accent);padding:0;font-weight:600;align-self:flex-start}
+.linkbtn:hover:not(:disabled){background:none;text-decoration:underline}
+.checks li.off{color:var(--muted)}
+.checks li.off::before{content:"\2013";color:var(--muted)}
+.me{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+/* ---------- responsive ---------- */
+.assign{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) auto;gap:10px;align-items:end}
+.cols.beheer{grid-template-columns:repeat(2,minmax(0,1fr))}
+.colrow{grid-template-columns:44px minmax(0,1fr) auto}
+.back{display:none;align-self:flex-start;border:0;background:none;color:var(--accent);padding:6px 0;font-size:15px}
+.back:hover:not(:disabled){background:none;text-decoration:underline}
+@media (max-width:1100px){.cols.beheer{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:860px){
+  .wrap{gap:12px}
+  header.top{gap:10px}
+  header.top{position:static;padding:10px 16px}
+  header.top h1{font-size:18px}
+  .brand svg{width:28px;height:28px}
+  header.top>.row{width:100%;justify-content:space-between;flex-wrap:nowrap;gap:8px}
+  .who-pick{font-size:0;gap:0}
+  .who-pick select{font-size:15px}
+  .peers{display:none}
+  .who-pick select{min-width:0;max-width:52vw}
+  .kpis{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding-bottom:4px;margin-inline:-16px;padding-inline:16px;scrollbar-width:none}
+  .kpis::-webkit-scrollbar{display:none}
+  .kpi{min-width:150px;flex:none;scroll-snap-align:start;padding:12px 14px}
+  .kpi b{font-size:24px}
+  section{padding:16px;border-radius:14px}
+  /* telefoon: overzicht en aanvraag als twee schermen */
+  body.open-detail .inbox, body.open-detail .kpis{display:none}
+  body:not(.open-detail) .mid, body:not(.open-detail) .right{display:none}
+  .back{display:inline-flex}
+  .assign{grid-template-columns:minmax(0,1fr)}
+  .assign button{justify-self:start}
+  input,textarea,select,button{min-height:42px}
+  button.small{min-height:38px}
+  input,textarea,select{font-size:16px}
+  .facts{grid-template-columns:minmax(0,1fr)}
+  #d-actions{width:100%}
+}
+@media (max-width:420px){.totals{grid-template-columns:repeat(2,minmax(0,1fr))}.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</body>
+</html>
+</head>
+<body>
+
+<div class="login" id="login">
+  <form class="login-card" id="loginForm" novalidate>
+    <span class="logo" aria-label="AMZ Touringcars"><span class="amz">AMZ</span><span class="tc">TOURINGCARS</span></span>
+    <h2 class="login-t">Offerte-inbox</h2>
+    <label>E-mailadres<input id="li-email" type="email" autocomplete="username" required></label>
+    <label>Wachtwoord<input id="li-pw" type="password" autocomplete="current-password" required></label>
+    <button class="primary" id="li-btn">Inloggen</button>
+    <button type="button" class="linkbtn" id="li-vergeten">Wachtwoord vergeten?</button>
+    <p class="status" id="li-status" role="status"></p>
+  </form>
+  <form class="login-card" id="pwForm" novalidate hidden>
+    <span class="logo" aria-label="AMZ Touringcars"><span class="amz">AMZ</span><span class="tc">TOURINGCARS</span></span>
+    <h2 class="login-t">Kies je wachtwoord</h2>
+    <label>Nieuw wachtwoord<input id="pw1" type="password" autocomplete="new-password" minlength="8"></label>
+    <label>Nog een keer<input id="pw2" type="password" autocomplete="new-password"></label>
+    <button class="primary" id="pw-btn">Opslaan en verder</button>
+    <p class="status" id="pw-status" role="status"></p>
+  </form>
+</div>
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-label="AMZ Touringcars"><span class="amz">AMZ</span><span class="tc">TOURINGCARS</span></span>
+      <span class="divider" aria-hidden="true"></span>
+      <h1>Offerte-inbox</h1><span class="mode" id="modeBadge">Verbinden…</span>
+    </div>
+    <div class="row" style="gap:14px">
+      <div class="peers" id="peers" aria-label="Collega's online"></div>
+      <select id="ik" hidden aria-hidden="true"></select>
+      <span class="me" id="me"></span>
+      <button class="small" id="logout">Uitloggen</button>
+      <span class="seg" role="group" aria-label="Weergave">
+        <button type="button" id="navInbox" aria-pressed="true">Dashboard</button>
+        <button type="button" id="navBeheer" aria-pressed="false">Beheer</button>
+      </span>
+    </div>
+  </header>
+  <div class="notice" id="localNotice" hidden></div>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="cols" id="viewInbox">
+    <div class="col inbox">
+      <section>
+        <div class="banner" id="mailBanner" style="font-size:13px"><span id="mailText">Mailbox wordt gecontroleerd…</span></div>
+        <div class="row">
+          <button class="primary small" id="newPhone">Telefonische aanvraag</button>
+          <button class="small" id="newPaste">E-mail plakken</button>
+        </div>
+        <label for="zoek" style="display:none">Zoeken</label>
+        <h2 id="listTitle">Open aanvragen</h2>
+        <input id="zoek" type="search" placeholder="Zoek op klant, plaats of datum">
+        <ul id="list"></ul>
+      </section>
+    </div>
+
+    <div class="col mid">
+      <button type="button" class="back" id="backBtn">&larr; Terug naar overzicht</button>
+      <section id="pastePanel" hidden>
+        <h2>Nieuwe aanvraag uit e-mail</h2>
+        <div class="grid g2">
+          <label>Binnengekomen via<select id="pasteBron"><option>Website</option><option>E-mail</option></select></label>
+        </div>
+        <textarea id="pasteText" placeholder="Plak hier de volledige e-mail of het websiteformulier"></textarea>
+        <p class="hint">De e-mailtekst wordt alleen gebruikt om de gegevens uit te lezen en daarna niet bewaard. De e-mail zelf blijft in Outlook.</p>
+        <div class="row">
+          <button class="primary" id="pasteBtn">Uitlezen en aanmaken</button>
+          <button id="pasteStop" hidden>Stop</button>
+          <button id="pasteCancel">Annuleren</button>
+          <span class="status" id="pasteStatus"></span>
+        </div>
+      </section>
+
+      <section class="empty" id="emptyState">
+        <h3 id="emptyTitle">Kies links een aanvraag</h3>
+        <p id="emptyText">Hier werk je de gekozen aanvraag uit. Het reisprogramma verschijnt rechts.</p>
+      </section>
+
+      <div class="col" id="detail" hidden>
+        <section>
+          <div class="draftbar" id="draftBar" hidden><span>Nieuwe telefonische aanvraag, nog niet opgeslagen</span><span class="row" style="gap:8px"><button class="primary small" id="draftSave">Aanvraag opslaan</button><button class="small" id="draftCancel">Annuleren</button></span></div>
+          <div class="banner" id="peerBanner" hidden></div>
+          <div class="banner" id="remoteBanner" hidden><span id="remoteText"></span><button class="small" id="remoteLoad">Nieuwste versie laden</button></div>
+          <div class="dhead">
+            <div class="col" style="gap:2px;min-width:0"><h3 id="d-titel"></h3><span class="hint" id="d-meta"></span><a class="maps" id="d-mail" target="_blank" rel="noopener" hidden>Open de e-mail in Outlook</a></div>
+            <div class="row" style="gap:8px" id="d-actions">
+              <label for="d-status" class="sr">Status</label>
+              <select id="d-status" class="slim"><option>Nieuw</option><option>In behandeling</option><option>Wacht op klant</option><option>Afgerond</option></select>
+              <button class="primary small" id="d-done">Offerte gemaakt</button>
+            </div>
+          </div>
+          <span class="seg" role="group" aria-label="Soort rit" id="soortSeg">
+            <button type="button" data-soort="Standaard rit">Standaard rit</button><button type="button" data-soort="Dagtocht">Dagtocht</button><button type="button" data-soort="Meerdaagse reis">Meerdaagse reis</button>
+          </span>
+          <div class="spoedbox" id="d-spoed" hidden></div>
+          <div class="claim" id="assignRow">
+            <button class="small" id="d-claim">Oppakken</button>
+            <button class="small" id="d-handoff">Doorgeven aan collega</button>
+            <button class="small" id="d-release" hidden>Loslaten</button>
+            <span class="status" id="claimStatus"></span>
+          </div>
+          <div class="handoff" id="handoffBox" hidden>
+            <div class="assign">
+              <label>Naar collega<select id="d-wie"></select></label>
+              <label>Bericht<input id="d-bericht" placeholder="Bijv. wil jij de offerte versturen?"></label>
+              <button class="primary small" id="d-assign">Verzenden</button>
+            </div>
+            <div class="row"><button class="small" id="d-handoffCancel">Annuleren</button><span class="status" id="handoffStatus"></span></div>
+          </div>
+          <div class="task" id="d-task" hidden></div>
+          <details class="more" id="logBox"><summary>Geschiedenis</summary><ul class="log" id="d-log"></ul>
+            <div class="row" style="margin-top:8px"><button class="small danger" id="d-del">Aanvraag verwijderen</button>
+            <span class="row" id="d-delConfirm" hidden style="gap:6px"><span class="hint">Echt verwijderen?</span><button class="small danger" id="d-delYes">Ja, verwijderen</button><button class="small" id="d-delNo">Nee</button></span></div>
+          </details>
+        </section>
+
+        <section id="notesBox" class="telform" hidden>
+          <div class="row" style="justify-content:space-between"><h2>Offerte-aanvraag</h2><span class="hint">d.d. <span id="tel-dd"></span></span></div>
+          <div class="paper">
+            <label class="req">Naam klant<input id="t-naam" data-b="klant.bedrijf" required></label>
+            <label class="req">T.a.v.<input id="t-tav" data-b="klant.naam" required></label>
+            <label class="req">Telefoon<input id="t-tel" data-b="klant.telefoon" inputmode="tel" required></label>
+            <label class="req">E-mail<input id="t-email" data-b="klant.email" type="email" required></label>
+            <label>Postcode + huisnummer<input id="t-pc" data-b="klant.pc" data-pc="t" placeholder="4454 PZ 8"></label>
+            <label>Adres<input id="t-adres" data-b="klant.adres"></label>
+            <label>Woonplaats<input id="t-woonplaats" data-b="klant.postcodePlaats"></label>
+            <hr>
+            <label>Datum rit<input id="t-datum" type="date" data-b="leg.datum"></label>
+            <label>Aantal passagiers<input id="t-pax" data-b="pax" inputmode="numeric"></label>
+            <label>Bustype<select id="t-bus" data-b="busWens">
+              <option value="">Voordeligste optie</option>
+              <option>Club Coach</option><option>Dubbeldekker</option><option>Groepsvervoer bus</option><option>Midibus</option>
+              <option>Minibus</option><option>Rolstoeltouringcar</option><option>Touringcar</option><option>Touringcar XL</option>
+            </select></label>
+            <p class="businfo" id="t-businfo" style="align-self:end;padding-bottom:9px"></p>
+            <label class="wide">Vertrekpunt<input id="t-vertrekpunt" data-b="tel.vertrekpunt" placeholder="Adres, postcode + huisnr, of een naam zoals 'Station Goes'"></label>
+            <label>Vertrektijd<input id="t-vertrektijd" type="time" data-b="leg.tijd"></label>
+            <label>Thuiskomst<input id="t-thuis" type="time" data-b="tel.thuiskomst"></label>
+            <label class="wide">Bestemming<input id="t-bestemming" data-b="tel.bestemming" placeholder="Adres, of een naam zoals 'Bobbejaanland'"></label>
+            <label class="wide">Programma<textarea id="t-programma" data-b="tel.programma" style="min-height:70px" placeholder="Wat gaat de groep doen, tussenstops, wensen"></textarea></label>
+          </div>
+          <div class="row"><button class="primary small" id="notesBtn" hidden>Uitwerken</button><span class="status" id="notesStatus"></span></div>
+        </section>
+
+        <section id="klantBox">
+          <h2>Offerte-aanvraag</h2>
+          <div class="paper">
+            <label class="req">Naam klant<input id="k-bedrijf" data-kl="bedrijf"></label>
+            <label class="req">T.a.v.<input id="k-naam" data-kl="naam"></label>
+            <label class="req">Telefoon<input id="k-telefoon" data-kl="telefoon"></label>
+            <label class="req">E-mail<input id="k-email" data-kl="email"></label>
+            <label>Postcode + huisnummer<input id="k-pc" data-kl="pc" data-pc="k" placeholder="4454 PZ 8"></label>
+            <label>Adres<input id="k-adres" data-kl="adres"></label>
+            <label>Woonplaats<input id="k-postcodePlaats" data-kl="postcodePlaats"></label>
+            <hr>
+            <label>Aantal passagiers<input id="f-pax" inputmode="numeric"></label>
+            <label>Bustype<select id="f-busWens">
+              <option value="">Voordeligste optie</option>
+              <option>Club Coach</option><option>Dubbeldekker</option><option>Groepsvervoer bus</option><option>Midibus</option>
+              <option>Minibus</option><option>Rolstoeltouringcar</option><option>Touringcar</option><option>Touringcar XL</option>
+            </select></label>
+            <p class="businfo wide" id="businfo"></p>
+          </div>
+        </section>
+
+        <section>
+          <div class="row" style="justify-content:space-between"><h2>Uitwerking</h2><span class="status" id="zoekStatus"></span></div>
+          <label class="check"><input type="checkbox" id="f-retour"> Terugweg is hetzelfde als de heenweg</label>
+          <div id="legs" class="col" style="gap:10px"></div>
+          <div class="row" id="legBtns"><button class="small" id="addLeg">Rit toevoegen</button><button class="small" id="addReturn">Retourrit toevoegen</button></div>
+          <div class="leegline">
+            <div class="col" style="gap:2px;min-width:0"><b>Leegrit Borssele</b><span class="hint" id="leegInfo"></span></div>
+            <label class="check" style="font-size:13px"><input type="checkbox" id="f-leegAfw"> Afwijkende leegrit</label>
+          </div>
+          <div class="grid g2" id="leegFields" hidden>
+            <label>Aanrijden (km)<input id="f-leegHeen" inputmode="decimal"><span class="flag" id="flag-leegHeen" hidden>Via Google Maps</span><a class="maps" id="m-leegHeen" target="_blank" rel="noopener">Open in Google Maps</a></label>
+            <label>Reistijd aanrijden (u:mm)<input id="f-leegHeenDuur" placeholder="0:20"><span class="flag" id="flag-leegHeenDuur" hidden>Via Google Maps</span></label>
+            <label id="lab-leegTerug">Terug (km)<input id="f-leegTerug" inputmode="decimal"><span class="flag" id="flag-leegTerug" hidden>Via Google Maps</span><a class="maps" id="m-leegTerug" target="_blank" rel="noopener">Open in Google Maps</a></label>
+            <label id="lab-leegTerugDuur">Reistijd terug (u:mm)<input id="f-leegTerugDuur"><span class="flag" id="flag-leegTerugDuur" hidden>Via Google Maps</span></label>
+          </div>
+          <details class="more"><summary>Wensen en nog nodig</summary>
+            <div class="grid g2" style="margin-top:8px">
+              <label>Extra wensen (één per regel)<textarea id="f-wensen" style="min-height:64px"></textarea></label>
+              <label>Nog nodig van de klant<textarea id="f-nodig" style="min-height:64px"></textarea></label>
+            </div>
+          </details>
+        </section>
+      </div>
+    </div>
+
+    <div class="col right" id="rightCol" hidden>
+      <div class="col sticky">
+        <section>
+          <div class="row" style="justify-content:space-between">
+            <h2>Reisprogramma</h2>
+            <button class="small" id="copyBtn">Kopieer reisschema</button>
+          </div>
+          <div class="totals">
+            <div><span>Totaal km</span><b id="t-km">–</b></div>
+            <div><span>Rijtijd</span><b id="t-rij">–</b></div>
+            <div><span>Vertrek stalling</span><b id="t-uit">–</b></div>
+            <div><span>Terug in stalling</span><b id="t-in">–</b></div>
+            <div><span>Leegrit (tijd)</span><b id="t-leeg">–</b></div>
+            <div><span>Chauffeur-arbeid incl. leegrit</span><b id="t-arb">–</b></div>
+          </div>
+          <div class="lands" id="t-land"></div>
+          <pre id="out"></pre>
+          <a class="maps" id="m-route" target="_blank" rel="noopener">Passagiersroute openen in Google Maps</a>
+        </section>
+        <div class="facts">
+          <section class="plain"><h2>Samenvatting</h2><dl class="sum" id="sum"></dl></section>
+          <section class="plain" id="checksBox"><h2>Extra wensen</h2><ul class="checks" id="checks"></ul></section>
+          <section class="plain" id="needBox"><h2>Nog nodig</h2><ul class="checks warns" id="needList"></ul></section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols beheer" id="viewBeheer" hidden>
+    <div class="col">
+      <section>
+        <h2>Collega's</h2>
+        <p class="hint">Iedereen met een account. De kleur zie je terug in de lijst.</p>
+        <div class="col" style="gap:8px" id="colList"></div>
+        <details class="more"><summary>Collega uitnodigen</summary>
+          <div class="grid g2" style="margin-top:8px">
+            <label>Naam<input id="inv-naam"></label>
+            <label>E-mailadres<input id="inv-email" type="email"></label>
+          </div>
+          <div class="row" style="margin-top:8px"><button class="small primary" id="invBtn">Uitnodiging versturen</button><span class="status" id="invStatus"></span></div>
+          <p class="hint" style="margin-top:6px">Je collega krijgt een mail om een wachtwoord te kiezen. Iemand verwijderen doe je in Supabase onder Authentication, Users.</p>
+        </details>
+      </section>
+      <section>
+        <h2>Koppelingen</h2>
+        <ul class="checks" id="koppelingen"></ul>
+        <div class="row"><button class="small" id="mailNu" hidden>Mailbox nu controleren</button><span class="status" id="mailNuStatus"></span></div>
+      </section>
+    </div>
+    <div class="col">
+      <section>
+        <h2>Spoedregels</h2>
+        <p class="hint">Een open aanvraag krijgt een rood uitroepteken als een van deze regels geldt.</p>
+        <label>Spoedklanten (één per regel; naam, bedrijf of e-maildomein)<textarea id="s-klanten" style="min-height:120px" placeholder="Bijv.&#10;VO Walcheren&#10;@hz.nl"></textarea></label>
+        <div class="grid g2">
+          <label>Ritdatum binnen (dagen)<input id="s-dagen" inputmode="numeric"></label>
+          <label>Groot vanaf (passagiers)<input id="s-pax" inputmode="numeric"></label>
+        </div>
+      </section>
+      <div class="row"><button class="primary" id="setSave">Beheer opslaan</button><span class="status" id="setStatus"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = "Quistenburg 8, 4454 PZ Borssele";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const touch = () => {};
+
+const SIDE = ["Locatie","Adres","Postcode","Stad","Gezocht"];
+const cp = (to, a, from, b) => { SIDE.forEach(f => { to[a + f] = from[b + f]; }); return to; };   // kopieer een kant (van/naar) tussen ritten
+const emptyLeg = () => ({datum:"",vanLocatie:"",vanAdres:"",vanPostcode:"",vanStad:"",vanGezocht:false,naarLocatie:"",naarAdres:"",naarPostcode:"",naarStad:"",naarGezocht:false,tijd:"",type:"vertrek",km:"",duur:"",kmGeschat:false,kmLand:{}});
+// Locatienaam hoort niet ook nog in het adres- of plaatsveld te staan
+function cleanLeg(l){
+  for (const sd of ["van","naar"]) {
+    const loc = T(l[sd + "Locatie"]); if (!loc) continue;
+    const strip = v => { let a = T(v); const i = a.toLowerCase().indexOf(loc.toLowerCase()); if (i >= 0) a = (a.slice(0, i) + a.slice(i + loc.length)).replace(/^[\s,;:()\-]+|[\s,;:()\-]+$/g, "").replace(/\s*,\s*,\s*/g, ", "); return a; };
+    l[sd + "Adres"] = strip(l[sd + "Adres"]);
+    const st = strip(l[sd + "Stad"]); if (st) l[sd + "Stad"] = st;
+  }
+  return l;
+}
+const legKey = l => SIDE.slice(0, 4).map(f => T(l["van" + f]) + ">" + T(l["naar" + f])).join("|").toLowerCase() + "|" + l.tijd + l.type + T(l.datum);
+const emptyKlant = () => ({naam:"",bedrijf:"",adres:"",postcodePlaats:"",telefoon:"",email:"",pc:""});
+/* ---------- rekenregels ---------- */
+const num = v => { const n = parseFloat(String(v ?? "").replace(",", ".")); return isFinite(n) && n >= 0 ? n : null; };
+function parseDur(v){               // "1:35", "1u35", "1.35 uur" of "95" (minuten)
+  const s = String(v ?? "").trim().toLowerCase(); if (!s) return null;
+  const m = s.match(/^(\d+)\s*(?:[:.]|u(?:ur)?)\s*(\d{1,2})?/);
+  if (m && /[:u.]/.test(s)) return (+m[1]) * 60 + (+(m[2] || 0));
+  const n = parseFloat(s); return isFinite(n) && n > 0 ? Math.round(n) : null;
+}
+const roundDur = min => min == null ? null : Math.ceil((min * 1.08) / 15 - 1e-9) * 15;   // +8%, naar boven op kwartier
+const parseTime = t => { const m = String(t ?? "").match(/^(\d{1,2})[:.](\d{2})/); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+const fmtTime = m => { if (m == null) return "XX.XX uur"; const x = ((m % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, "0") + "." + String(x % 60).padStart(2, "0") + " uur"; };
+const fmtDur = m => m == null ? "X uur XX min" : Math.floor(m / 60) + " uur " + String(m % 60).padStart(2, "0") + " min";
+const short = m => Math.floor(m / 60) + "u" + String(m % 60).padStart(2, "0");
+const T = x => (x || "").trim();
+const place = (l, s) => [T(l[s + "Stad"]), T(l[s + "Adres"])].filter(Boolean).join(", ") || T(l[s + "Locatie"]);   // reisschema: stad, adres; de locatienaam alleen als er verder niets bekend is
+const placeQ = (l, s) => { const a = T(l[s + "Adres"]), pc = [T(l[s + "Postcode"]), T(l[s + "Stad"])].filter(Boolean).join(" "); return a ? [a, pc].filter(Boolean).join(", ") : [T(l[s + "Locatie"]), pc].filter(Boolean).join(", "); };   // zoekterm voor Maps
+const mapsUrl = pts => "https://www.google.com/maps/dir/" + pts.filter(Boolean).map(encodeURIComponent).join("/");
+
+const toISO = v => { const m = fmtDate(v).match(/^(\d{2})-(\d{2})-(\d{4})$/); return m ? m[3] + "-" + m[2] + "-" + m[1] : ""; };   // voor de datumkiezer
+const VLAG = c => `<span class="fl ${["NL","BE","DE","FR","LU"].includes(c) ? "fl-" + c : "fl-x"}" title="${esc(c)}"></span>`;
+const landTekst = kl => Object.entries(kl || {}).filter(([, v]) => v > 0).map(([c, v]) => VLAG(c) + esc(c) + " " + Math.round(v) + " km").join(" ");
+const nietAlleenNL = kl => Object.keys(kl || {}).some(c => c !== "NL" && kl[c] > 0);
+// Datum altijd als dag-maand-jaar tonen
+const MND = ["jan","feb","mrt|maa","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+function fmtDate(v){
+  const Y = String(new Date().getFullYear());   // geen jaar genoemd = huidig jaar
+  const s = String(v ?? "").trim(), p2 = x => String(x).padStart(2, "0"); let m;
+  if ((m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/))) return p2(m[3]) + "-" + p2(m[2]) + "-" + m[1];
+  if ((m = s.match(/^(\d{1,2})[-/.](\d{1,2})(?:[-/.](\d{4}|\d{2}))?$/))) return p2(m[1]) + "-" + p2(m[2]) + "-" + (m[3] ? (m[3].length === 2 ? "20" + m[3] : m[3]) : Y);
+  if ((m = s.toLowerCase().match(/(\d{1,2})\s+([a-z]+)\.?(?:\s+(\d{4}))?/))) { const i = MND.findIndex(x => new RegExp("^(" + x + ")").test(m[2])); if (i >= 0) return p2(m[1]) + "-" + p2(i + 1) + "-" + (m[3] || Y); }
+  return s;
+}
+
+// Bussen die een klant kan vragen, met zitplaatsen. Club Coach, Groepsvervoer bus en Rolstoeltouringcar alleen op verzoek.
+const BUSSEN = {"Club Coach":34, "Dubbeldekker":92, "Groepsvervoer bus":63, "Midibus":30, "Minibus":19, "Rolstoeltouringcar":62, "Touringcar":58, "Touringcar XL":62};
+function busWens(wens, n){
+  if (wens === "Dubbeldekker") return n <= 82 ? "82-persoons dubbeldekker" : "92-persoons dubbeldekker";
+  if (wens === "Touringcar") return n >= 55 && n <= 58 ? "58-er" : "Standaard touringcar";
+  return wens;
+}
+
+// Voordeligste bus op basis van het aantal personen
+function busFor(n){
+  if (!(n >= 8)) return null;
+  if (n <= 19) return "Minibus";
+  if (n <= 54) return "Standaard touringcar";
+  if (n <= 58) return "58-er";
+  if (n <= 62) return "Touringcar XL";
+  if (n <= 82) return "82-persoons dubbeldekker";
+  if (n <= 92) return "92-persoons dubbeldekker";
+  return null;
+}
+
+// Bij "terugweg is hetzelfde" bestaat rit 2 niet als invulblok: hij wordt afgeleid uit rit 1
+const VOORSTAAN = 10;   // minuten vóór het eerste vertrek bij de klant voorstaan
+function effLegs(){
+  if (!S.retour || !S.legs.length) return S.legs;
+  const a = S.legs[0], b = emptyLeg(); cp(b, "van", a, "naar"); cp(b, "naar", a, "van");
+  b.km = a.km; b.duur = a.duur; b.kmLand = a.kmLand; b.kmGeschat = a.kmGeschat; b.tijd = S.retourTijd || ""; b.datum = S.retourDatum || "";
+  return [a, b];
+}
+
+function compute(){
+  const src = effLegs();
+  const need = S.nodig.split("\n").map(s => s.trim()).filter(Boolean);
+  let prevArr = null, curDate = ""; const days = [];
+  const legs = src.map((l, i) => {
+    const dur = roundDur(parseDur(l.duur)), t = parseTime(l.tijd), d = fmtDate(l.datum);
+    let dep = null, arr = null;
+    if (t != null) { if (l.type === "aankomst") { arr = t; if (dur != null) dep = t - dur; } else { dep = t; if (dur != null) arr = t + dur; } }
+    const newDay = i === 0 || (d !== "" && d !== curDate);
+    if (d) curDate = d;
+    if (newDay) { prevArr = null; days.push({first:null, last:null, ok:true}); }
+    const day = days[days.length - 1], p = src[i - 1];
+    let fout = false;
+    if (!newDay && p) {
+      if (l.tijd && l.tijd === p.tijd && l.type === p.type) fout = true;               // zelfde tijd als de vorige rit
+      else if (prevArr != null && dep != null && dep < prevArr) {
+        if (dep < 360) while (dep < prevArr) { dep += 1440; if (arr != null) arr += 1440; }  // terugrit na middernacht
+        else fout = true;
+      }
+    }
+    if (fout) need.push("Rit " + (i + 1) + ": de tijd (" + fmtTime(t) + ") valt samen met of ligt vóór de aankomst van rit " + i + ". Juiste tijd navragen bij de klant");
+    if (dep == null || arr == null || fout) day.ok = false;
+    if (day.first == null) day.first = dep;
+    day.last = arr;
+    if (arr != null) prevArr = arr; else if (dep != null) prevArr = dep;
+    return {...l, dur, dep, arr, newDay, dateEff: curDate, kmN: num(l.km), from: place(l, "van"), to: place(l, "naar"), fromQ: placeQ(l, "van"), toQ: placeQ(l, "naar")};
+  });
+  const all = f => legs.length && legs.every(f);
+  const paxKm = all(l => l.kmN != null) ? Math.round(legs.reduce((a, l) => a + l.kmN, 0)) : null;
+  const lh = num(S.leegHeen), f0 = legs[0], fN = legs[legs.length - 1];
+  const mirror = S.retour ? lh != null : !String(S.leegTerug).trim() && lh != null && f0 && f0.fromQ && f0.fromQ === fN.toQ;   // retour eindigt bij de opstap: zelfde afstand terug
+  const lt = mirror ? lh : num(S.leegTerug);
+  const sameEnds = f0 && f0.fromQ && f0.fromQ === fN.toQ;
+  const lhD = roundDur(parseDur(S.leegHeenDuur));                                    // lege rit: ook +8% en naar boven op een kwartier
+  const mirrorD = S.retour ? lhD != null : !String(S.leegTerugDuur).trim() && lhD != null && sameEnds;
+  const ltD = mirrorD ? lhD : roundDur(parseDur(S.leegTerugDuur));
+  const leegTijd = lhD != null && ltD != null ? lhD + ltD : null;
+  const leegKm = lh != null && lt != null ? Math.round(lh + lt) : null;
+  const rij = all(l => l.dur != null) ? legs.reduce((a, l) => a + l.dur, 0) : null;
+  const arbeid = days.length && days.every(d => d.ok) ? days.reduce((a, d) => a + (d.last - d.first), 0) : null;   // per dag, eerste vertrek tot laatste aankomst
+  const wacht = arbeid != null && rij != null ? arbeid - rij : null;
+  const pts = []; legs.forEach(l => { for (const p of [l.fromQ, l.toQ]) if (p && pts[pts.length - 1] !== p) pts.push(p); });
+
+  const n = parseInt(S.pax, 10), auto = busFor(n), wens = BUSSEN[S.busWens] ? S.busWens : "";
+  const bus = wens ? busWens(wens, n) : auto || "";
+  if (wens && n > BUSSEN[wens] && n <= 92) need.push("Gevraagde bus (" + wens + ", " + BUSSEN[wens] + " plaatsen) is te klein voor " + n + " personen");
+  legs.forEach((l, i) => {
+    const r = "Rit " + (i + 1) + ": ";
+    if (!l.from || !l.to) need.push(r + "vertrek- of aankomstadres ontbreekt");
+    if (l.dep == null && l.arr == null) need.push(r + "vertrek- of aankomsttijd ontbreekt");
+    if (l.kmN == null) need.push(r + "kilometers nog overnemen uit Google Maps");
+    if (l.dur == null) need.push(r + "reistijd nog overnemen uit Google Maps");
+  });
+  const kl = S.klant || {};
+  if (!T(kl.bedrijf)) need.push("Naam klant ontbreekt");
+  if (!T(kl.naam)) need.push("T.a.v. (contactpersoon) ontbreekt");
+  if (!T(kl.telefoon)) need.push("Telefoonnummer klant ontbreekt");
+  if (!T(kl.email)) need.push("E-mailadres klant ontbreekt");
+  if (leegTijd == null) need.push("Reistijd van de lege ritten van/naar Borssele nog invullen");
+  if (leegKm == null) need.push("Lege kilometers van/naar Borssele nog invullen");
+  if (!legs[0] || !legs[0].dateEff) need.push("Datum van de rit");
+  if (isNaN(n)) need.push("Aantal personen");
+  else if (n > 92) need.push("Groep van " + n + " personen past niet in één bus (maximaal 92)");
+  else if (n < 8 && !wens) need.push("Minder dan 8 personen: valt buiten het busschema");
+  const landKm = {}; let landOk = legs.length > 0;
+  legs.forEach(l => { const e = Object.entries(l.kmLand || {}); if (!e.length) landOk = false; e.forEach(([c, v]) => { landKm[c] = (landKm[c] || 0) + (+v || 0); }); });
+  return {landKm: landOk ? landKm : null, ltD, legs, paxKm, leegKm, totKm: paxKm != null && leegKm != null ? paxKm + leegKm : null, rij, arbeid, wacht, pts, need, lh, lt, mirror, leegTijd, mirrorD, lhD, arbeidTot: arbeid != null && leegTijd != null ? arbeid + leegTijd + VOORSTAAN : null,
+          stalUit: f0 && f0.dep != null && lhD != null ? f0.dep - lhD - VOORSTAAN : null, stalIn: fN && fN.arr != null && ltD != null ? fN.arr + ltD : null,
+          first: legs[0], last: legs[legs.length - 1], multiDay: days.length > 1, bus, auto, wens, n};
+}
+
+function buildText(c){
+  const L = [];
+  c.legs.forEach((l, i) => {
+    if (i) L.push("");
+    if (c.multiDay && l.newDay) L.push(l.dateEff || "Datum onbekend");
+    L.push(fmtTime(l.dep) + "\tVertrek vanuit " + (l.from || "[stad], [adres]"));
+    L.push(fmtTime(l.arr) + "\tAankomst in " + (l.to || "[stad], [adres]"));
+  });
+  return L.join("\n");
+}
+
+/* ---------- weergave ---------- */
+function renderOut(){
+  const c = compute();
+  $("out").textContent = buildText(c);
+  $("t-km").textContent = c.totKm == null ? "–" : c.totKm + " km";
+  $("t-rij").textContent = c.rij == null ? "–" : short(c.rij);
+  $("lab-leegTerug").hidden = $("lab-leegTerugDuur").hidden = !!S.retour;   // terugweg hetzelfde: lege rit terug is gelijk aan aanrijden
+  $("t-uit").textContent = c.stalUit == null ? "–" : fmtTime(c.stalUit).replace(" uur", "");
+  $("t-in").textContent = c.stalIn == null ? "–" : fmtTime(c.stalIn).replace(" uur", "");
+  $("t-leeg").textContent = c.leegTijd == null ? "–" : short(c.leegTijd);
+  $("t-arb").textContent = c.arbeidTot == null ? "–" : short(c.arbeidTot);
+  $("flag-leegHeenDuur").hidden = !(S.leegGeschat && String(S.leegHeenDuur).trim());
+  $("flag-leegTerugDuur").hidden = !(S.leegGeschat && String(S.leegTerugDuur).trim());
+  $("f-leegTerugDuur").placeholder = c.mirrorD ? "zelfde als aanrijden" : "";
+  $("needBox").hidden = !c.need.length;
+  $("needList").innerHTML = c.need.map(n => "<li>" + esc(n) + "</li>").join("");
+  const r = $("m-route"); r.hidden = c.pts.length < 2; if (c.pts.length > 1) r.href = mapsUrl(c.pts);
+  const a = $("m-leegHeen"), b = $("m-leegTerug");
+  a.hidden = !(c.first && c.first.from); if (!a.hidden) a.href = mapsUrl([BASE, c.first.fromQ]);
+  b.hidden = !(c.last && c.last.to); if (!b.hidden) b.href = mapsUrl([c.last.toQ, BASE]);
+  c.legs.forEach((l, i) => {
+    const el = $("calc-" + i); if (el) el.innerHTML = l.dur == null ? "Reistijd invullen voor de berekening" :
+      "+8% afgerond: <b>" + fmtDur(l.dur) + "</b> · " + fmtTime(l.dep).replace(" uur", "") + " → " + fmtTime(l.arr).replace(" uur", "") + (nietAlleenNL(l.kmLand) ? '<div class="lands">' + landTekst(l.kmLand) + "</div>" : "");
+    const m = $("maps-" + i); if (m) { m.hidden = !(l.from && l.to); if (!m.hidden) m.href = mapsUrl([l.fromQ, l.toQ]); }
+  });
+  $("t-businfo").innerHTML = $("businfo").innerHTML = c.wens
+    ? "Bus: <b>" + esc(c.bus) + "</b> (gevraagd door klant" + (c.auto && c.auto !== c.bus ? "; voordeligste zou zijn: " + esc(c.auto) : "") + ")"
+    : c.auto ? "Bus: <b>" + esc(c.auto) + "</b> (voordeligste optie voor " + c.n + " personen)"
+    : isNaN(c.n) ? "Vul het aantal personen in, dan wordt de voordeligste bus gekozen."
+    : "Geen bus in het schema voor " + c.n + " personen.";
+  const kmS = v => v == null ? "–" : v + " km", du = v => v == null ? "–" : fmtDur(v);
+  const rows = [["Datum", (c.first && c.first.dateEff) || "–"]];
+  if (c.multiDay) rows.push(["Retour", c.last.dateEff || "–"]);
+  const soort = S.soort || autoSoort(c);
+  rows.push(["Passagiers", S.pax.trim() || "–"], ["Bus", c.bus || "–"], ["Soort", soort + (S.soort ? "" : " (herkend)")], null,
+            ["Passagiers-km", kmS(c.paxKm)], ["Lege km", kmS(c.leegKm)], null, ["Wachttijd", du(c.wacht)], ["Chauffeur-arbeid klant", du(c.arbeid)]);
+  $("sum").innerHTML = rows.map(r => r ? "<dt>" + r[0] + "</dt><dd>" + esc(r[1]) + "</dd>" : '<div class="gap"></div>').join("");
+  $("t-land").innerHTML = c.landKm && nietAlleenNL(c.landKm) ? "Passagiers-km per land: " + landTekst(c.landKm) : ""; $("t-land").hidden = !$("t-land").innerHTML;
+  document.querySelectorAll("#soortSeg button").forEach(b => { b.setAttribute("aria-pressed", b.dataset.soort === soort); b.title = !S.soort && b.dataset.soort === soort ? "Automatisch herkend" : ""; });
+  $("leegFields").hidden = !S.leegAfw; $("f-leegAfw").checked = !!S.leegAfw;
+  const lh = num(S.leegHeen);
+  $("leegInfo").innerHTML = lh == null && c.lhD == null ? "Wordt automatisch bepaald bij uitwerken of zodra beide adressen bekend zijn."
+    : "Heen " + (lh == null ? "–" : Math.round(lh) + " km") + " · " + (c.lhD == null ? "–" : fmtDur(c.lhD)) + "&nbsp;&nbsp;Terug " + (c.lt == null ? "–" : Math.round(c.lt) + " km") + " · " + (c.ltD == null ? "–" : fmtDur(c.ltD)) + " <span class=\"hint\">(reistijd incl. 8%, op kwartier)</span>";
+  const w = S.wensen.split("\n").map(s => s.trim()).filter(Boolean);
+  $("checks").innerHTML = w.length ? w.map(x => "<li>" + esc(x) + "</li>").join("") : "";
+  $("checksBox").hidden = !w.length;
+  $("flag-leegHeen").hidden = !(S.leegGeschat && String(S.leegHeen).trim());
+  $("flag-leegTerug").hidden = !(S.leegGeschat && String(S.leegTerug).trim());
+  $("f-leegTerug").placeholder = c.mirror ? "zelfde als aanrijden: " + Math.round(c.lh) : "";
+  scheduleSave();
+}
+
+function renderLegs(){
+  const flag = (i, side, on) => on ? `<span class="flag" id="flag-${i}-${side}">Opgezocht via Google Maps</span>` : "";
+  const shown = S.retour ? S.legs.slice(0, 1) : S.legs;
+  $("f-retour").checked = !!S.retour; $("legBtns").hidden = !!S.retour;
+  $("legs").innerHTML = shown.map((l, i) => `
+    <div class="leg">
+      <div class="leg-head"><strong>Rit ${i + 1}</strong>
+        <span class="row" style="gap:8px"><a class="maps" id="maps-${i}" target="_blank" rel="noopener">Open in Google Maps</a>
+        ${shown.length > 1 ? `<button class="small" data-del="${i}" aria-label="Rit ${i + 1} verwijderen">Verwijderen</button>` : ""}</span></div>
+      <div class="grid g2">
+        <label>Van: stad<input id="leg-${i}-vanStad" data-i="${i}" data-k="vanStad" value="${esc(l.vanStad)}"></label>
+        <label>Van: adres<input id="leg-${i}-vanAdres" data-i="${i}" data-k="vanAdres" value="${esc(l.vanAdres)}">${flag(i, "van", l.vanGezocht)}</label>
+        <label>Naar: stad<input id="leg-${i}-naarStad" data-i="${i}" data-k="naarStad" value="${esc(l.naarStad)}"></label>
+        <label>Naar: adres<input id="leg-${i}-naarAdres" data-i="${i}" data-k="naarAdres" value="${esc(l.naarAdres)}">${flag(i, "naar", l.naarGezocht)}</label>
+      </div>
+      <div class="grid g4">
+        <label>Datum${i ? " (leeg = zelfde dag)" : ""}<input type="date" id="leg-${i}-datum" data-i="${i}" data-k="datum" value="${esc(toISO(l.datum))}"></label>
+        <label>Tijd
+          <input type="time" id="leg-${i}-tijd" data-i="${i}" data-k="tijd" value="${esc(l.tijd)}">
+          <span class="seg" role="group" aria-label="Soort tijd">
+            <button type="button" data-type="vertrek" data-i="${i}" aria-pressed="${l.type !== "aankomst"}">Vertrek</button>
+            <button type="button" data-type="aankomst" data-i="${i}" aria-pressed="${l.type === "aankomst"}">Aankomst</button>
+          </span>
+        </label>
+        <label>Afstand (km)<input id="leg-${i}-km" data-i="${i}" data-k="km" inputmode="decimal" value="${esc(l.km)}">${l.kmGeschat ? `<span class="flag" id="flag-km-${i}">Via Google Maps</span>` : ""}</label>
+        <label>Reistijd Maps (u:mm)<input id="leg-${i}-duur" data-i="${i}" data-k="duur" placeholder="1:35" value="${esc(l.duur)}"></label>
+      </div>
+      <div class="leg-calc" id="calc-${i}"></div>
+    </div>`).join("") + (S.retour ? `
+    <div class="leg">
+      <div class="leg-head"><strong>Terugrit</strong><span class="hint">Omgekeerde route van rit 1, met dezelfde afstand en reistijd</span></div>
+      <div class="grid g4">
+        <label>Vertrek terug<input type="time" id="f-retourTijd" data-r="retourTijd" value="${esc(S.retourTijd)}"></label>
+        <label>Datum terug (leeg = zelfde dag)<input type="date" id="f-retourDatum" data-r="retourDatum" value="${esc(toISO(S.retourDatum))}"></label>
+      </div>
+      <div class="leg-calc" id="calc-1"></div>
+    </div>` : "");
+  renderOut();
+}
+
+let LOADING = false;
+function fillFields(){
+  LOADING = true;
+  if (!BUSSEN[S.busWens]) S.busWens = "";
+  S.legs.forEach(l => { l.datum = fmtDate(l.datum); cleanLeg(l); });
+  S.retourDatum = fmtDate(S.retourDatum);
+  $("f-pax").value = S.pax; $("f-busWens").value = S.busWens;
+  $("f-wensen").value = S.wensen; $("f-nodig").value = S.nodig; $("f-leegHeen").value = S.leegHeen; $("f-leegTerug").value = S.leegTerug; $("f-leegHeenDuur").value = S.leegHeenDuur; $("f-leegTerugDuur").value = S.leegTerugDuur;
+  renderLegs();
+  LOADING = false;
+}
+[["f-pax","pax"],["f-busWens","busWens"],["f-wensen","wensen"],["f-nodig","nodig"],["f-leegHeen","leegHeen"],["f-leegTerug","leegTerug"],["f-leegHeenDuur","leegHeenDuur"],["f-leegTerugDuur","leegTerugDuur"]]
+  .forEach(([id, k]) => $(id).addEventListener("input", e => { S[k] = e.target.value; if (k.startsWith("leeg")) S.leegGeschat = false; touch(); renderOut(); }));
+$("legs").addEventListener("input", e => {
+  const d = e.target.dataset;
+  if (d.r) { S[d.r] = d.r === "retourDatum" ? fmtDate(e.target.value) : e.target.value; touch(); renderOut(); return; }
+  if (!d.k) return;
+  const l = S.legs[+d.i]; l[d.k] = d.k === "datum" ? fmtDate(e.target.value) : e.target.value;
+  if (d.k === "km" || d.k === "duur") { l.kmGeschat = false; const f = $("flag-km-" + d.i); if (f) f.hidden = true; }
+  const side = d.k.startsWith("van") ? "van" : d.k.startsWith("naar") ? "naar" : null;
+  if (side) { l[side + "Gezocht"] = false; l[side + "Postcode"] = ""; l[side + "Locatie"] = "";   // zelf aangepast: opgezochte postcode geldt niet meer
+    const f = $("flag-" + d.i + "-" + side); if (f) f.hidden = true; }
+  touch(); renderOut();
+});
+$("legs").addEventListener("change", e => {      // datum bij verlaten van het veld omzetten naar dag-maand-jaar
+  const d = e.target.dataset;
+  if (/^(van|naar)(Adres|Stad)$/.test(d.k || "")) { zoekRit(+d.i); return; }
+});
+$("legs").addEventListener("click", e => {
+  const d = e.target.dataset;
+  if (d.del != null) { S.legs.splice(+d.del, 1); touch(); renderLegs(); }
+  else if (d.type) { S.legs[+d.i].type = d.type; touch(); renderLegs(); }
+});
+$("f-retour").addEventListener("change", e => {
+  if (e.target.checked) { const b = S.legs[1]; if (b) { S.retourTijd = b.type === "vertrek" ? b.tijd : ""; S.retourDatum = b.datum; } S.legs = S.legs.slice(0, 1); S.retour = true; }
+  else { S.legs = effLegs().map(l => ({...l})); S.retour = false; }
+  touch(); renderLegs();
+});
+$("addLeg").onclick = () => { const p = S.legs[S.legs.length - 1]; const n = emptyLeg(); if (p) cp(n, "van", p, "naar"); S.legs.push(n); touch(); renderLegs(); };
+$("addReturn").onclick = () => { const p = S.legs[S.legs.length - 1]; const n = emptyLeg(); if (p) { cp(n, "van", p, "naar"); cp(n, "naar", p, "van"); n.km = p.km; n.duur = p.duur; } S.legs.push(n); touch(); renderLegs(); };
+$("copyBtn").onclick = async () => {
+  const b = $("copyBtn");
+  try { await navigator.clipboard.writeText($("out").textContent); b.textContent = "Gekopieerd"; }
+  catch (e) { const r = document.createRange(); r.selectNodeContents($("out")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Geselecteerd, druk Ctrl+C"; }
+  setTimeout(() => b.textContent = "Kopieer reisschema", 2200);
+};
+
+
+
+
+/* ---------- aanvragen: opslag, spoed, toewijzen ---------- */
+const EMPTY = () => ({klant:emptyKlant(),pax:"",busWens:"",wensen:"",nodig:"",notities:"",tel:{vertrekpunt:"",bestemming:"",thuiskomst:"",programma:""},leegHeen:"",leegTerug:"",leegHeenDuur:"",leegTerugDuur:"",leegGeschat:false,retour:true,retourTijd:"",retourDatum:"",legs:[emptyLeg()]});
+const normalize = d => { const s = Object.assign(EMPTY(), JSON.parse(JSON.stringify(d || {}))); s.klant = Object.assign(emptyKlant(), s.klant); s.tel = Object.assign({vertrekpunt:"",bestemming:"",thuiskomst:"",programma:""}, s.tel); s.legs = (Array.isArray(s.legs) && s.legs.length ? s.legs : [emptyLeg()]).map(l => Object.assign(emptyLeg(), l)); delete s.request; delete s.example; return s; };
+const DEF_SET = {collegas:[], spoedKlanten:"", spoedDagen:14, spoedPax:150};
+const PALET = ["#0b7a5a","#c2410c","#7c3aed","#0e7490","#be185d","#4d7c0f","#b45309","#1d4ed8"];
+const SESSION = Math.random().toString(36).slice(2);
+const STATUS_DICHT = ["Afgerond"];
+const ls = { get(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch (e) {} } };
+
+let S = EMPTY();            // de gekozen aanvraag (rekengegevens)
+let A = new Map();          // id -> aanvraag
+let SET = {...DEF_SET};
+let SEL = null, FILTER = ls.get("inbox-filter") || "open", ZOEK = "", IK = ls.get("inbox-ik") || "";
+let saveTimer = null, loadedStamp = null;
+const CONCEPT = "__nieuw__";          // telefonische aanvraag die nog niet is opgeslagen
+let CONCEPT_DOC = null;
+const cur = () => SEL === CONCEPT ? CONCEPT_DOC : SEL ? A.get(SEL) : null;
+
+/* opslag: Supabase (live gedeeld met alle collega's) */
+let SB = null, CFG = {};
+const fromRow = r => ({...r, toegewezen: r.toegewezen || "", door: r.door || "", bewerktDoor: r.bewerkt_door || "", mailLink: r.mail_link || ""});
+function toRow(p){ const o = {}; for (const [k, v] of Object.entries(p)) { if (k === "id" || k === "mailLink") continue; if (k === "bewerktDoor") o.bewerkt_door = v; else if (k === "toegewezen" || k === "door") o[k] = v || null; else o[k] = v; } return o; }
+const store = (() => {
+  let onList = () => {}, onSet = () => {}, rows = new Map(), cols = [], inst = null;
+  const fail = e => setTopStatus("Opslaan lukt nu niet: " + (e?.message || "onbekende fout") + ". Ververs de pagina en probeer het opnieuw.", true);
+  const pushList = () => onList([...rows.values()]);
+  const pushSet = () => onSet({collegas: cols.map(c => ({id: c.id, naam: c.naam || c.email || "Collega", kleur: c.kleur, email: c.email})),
+                               spoedKlanten: inst?.spoed_klanten || "", spoedDagen: inst?.spoed_dagen ?? 14, spoedPax: inst?.spoed_pax ?? 150});
+  return {
+    local: false,
+    async start(l, st){
+      onList = l; onSet = st;
+      const [a, c, i] = await Promise.all([
+        SB.from("aanvragen").select("*").order("ontvangen", {ascending: false}).limit(2000),
+        SB.from("collegas").select("*").order("naam"),
+        SB.from("instellingen").select("*").eq("id", 1).maybeSingle()]);
+      for (const x of [a, c, i]) if (x.error) throw x.error;
+      rows = new Map(a.data.map(r => [r.id, fromRow(r)])); cols = c.data || []; inst = i.data;
+      pushSet(); pushList();
+      SB.channel("db")
+        .on("postgres_changes", {event: "*", schema: "public", table: "aanvragen"}, pl => {
+          if (pl.eventType === "DELETE") rows.delete(pl.old.id); else rows.set(pl.new.id, fromRow(pl.new)); pushList(); })
+        .on("postgres_changes", {event: "*", schema: "public", table: "collegas"}, pl => {
+          cols = cols.filter(x => x.id !== (pl.new?.id || pl.old?.id)); if (pl.eventType !== "DELETE") cols.push(pl.new); pushSet(); })
+        .on("postgres_changes", {event: "*", schema: "public", table: "instellingen"}, pl => { if (pl.new) { inst = pl.new; pushSet(); } })
+        .subscribe();
+    },
+    async add(doc){ const {data, error} = await SB.from("aanvragen").insert(toRow(doc)).select().single(); if (error) throw error; rows.set(data.id, fromRow(data)); return data.id; },
+    async update(id, patch){ const r = rows.get(id); if (r) rows.set(id, {...r, ...patch}); const {error} = await SB.from("aanvragen").update(toRow(patch)).eq("id", id); if (error) fail(error); },
+    async del(id){ rows.delete(id); const {error} = await SB.from("aanvragen").delete().eq("id", id); if (error) fail(error); },
+    async saveSet(st){ const {error} = await SB.from("instellingen").update({spoed_klanten: st.spoedKlanten, spoed_dagen: st.spoedDagen, spoed_pax: st.spoedPax}).eq("id", 1); if (error) throw error; },
+    async saveCollega(c){ const {error} = await SB.from("collegas").update({naam: c.naam, kleur: c.kleur}).eq("id", c.id); if (error) throw error; }
+  };
+})();
+async function api(pad, opts = {}){
+  const {data: {session}} = await SB.auth.getSession();
+  const r = await fetch(pad, {...opts, headers: {"Content-Type": "application/json", Authorization: "Bearer " + (session?.access_token || ""), ...(opts.headers || {})}});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.fout || "Fout " + r.status), {status: r.status});
+  return j;
+}
+function setTopStatus(t, err){ const s = $("setStatus"); if (s) { s.textContent = t; s.classList.toggle("err", !!err); } if (err) { const n = $("localNotice"); n.textContent = t; n.hidden = false; } }
+
+/* rekengegevens van de gekozen aanvraag bewaren (met kleine vertraging tijdens typen) */
+function scheduleSave(){
+  if (!SEL || LOADING) return;
+  if (SEL === CONCEPT) { if (CONCEPT_DOC) CONCEPT_DOC.data = normalize(S); return; }
+  const d = A.get(SEL); if (d) { d.data = normalize(S); }
+  renderList();
+  clearTimeout(saveTimer); saveTimer = setTimeout(flushSave, 700);
+}
+function flushSave(){
+  if (!saveTimer || !SEL || SEL === CONCEPT) { clearTimeout(saveTimer); saveTimer = null; return; }
+  clearTimeout(saveTimer); saveTimer = null;
+  const stamp = new Date().toISOString(); loadedStamp = stamp;
+  store.update(SEL, {data: normalize(S), gewijzigd: stamp, sessie: SESSION, bewerktDoor: mijnNaam()});
+}
+
+/* hulpfuncties voor de lijst */
+const collega = id => (SET.collegas || []).find(c => c.id === id);
+const naamVan = id => collega(id)?.naam || "";
+const titelVan = d => T(d.data?.klant?.bedrijf) || T(d.data?.klant?.naam) || "Onbekende klant";
+const tijdStr = iso => { try { return new Date(iso).toLocaleString("nl-NL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}); } catch (e) { return ""; } };
+function eersteDatum(data){
+  const m = fmtDate(data?.legs?.[0]?.datum).match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+}
+function spoedRedenen(d){
+  if (STATUS_DICHT.includes(d.status)) return [];
+  const r = [], k = d.data?.klant || {}, hooi = [k.bedrijf, k.naam, k.email].join(" ").toLowerCase();
+  for (const s of String(SET.spoedKlanten || "").split("\n").map(x => x.trim()).filter(Boolean))
+    if (hooi.includes(s.toLowerCase())) { r.push("Spoedklant: " + s); break; }
+  const dt = eersteDatum(d.data);
+  if (dt) {
+    const nu = new Date(); nu.setHours(0, 0, 0, 0);
+    const dagen = Math.round((dt - nu) / 864e5), max = parseInt(SET.spoedDagen, 10);
+    if (dagen < 0) r.push("Ritdatum is al voorbij");
+    else if (!isNaN(max) && dagen <= max) r.push(dagen === 0 ? "Rit is vandaag" : dagen === 1 ? "Rit is morgen" : "Rit over " + dagen + " dagen");
+  }
+  const n = parseInt(d.data?.pax, 10), grens = parseInt(SET.spoedPax, 10);
+  if (!isNaN(n) && !isNaN(grens) && n >= grens) r.push("Grote aanvraag: " + n + " passagiers");
+  return r;
+}
+function zichtbaar(d){
+  if (FILTER === "open" && STATUS_DICHT.includes(d.status)) return false;
+  if (FILTER === "spoed" && !spoedRedenen(d).length) return false;
+  if (FILTER === "nieuw" && (d.status || "Nieuw") !== "Nieuw") return false;
+  if (FILTER === "mine" && (!IK || d.toegewezen !== IK || STATUS_DICHT.includes(d.status))) return false;
+  if (FILTER === "done" && !STATUS_DICHT.includes(d.status)) return false;
+  if (ZOEK) {
+    const l = d.data?.legs?.[0] || {}, k = d.data?.klant || {};
+    const hooi = [k.bedrijf, k.naam, k.email, k.telefoon, l.vanStad, l.naarStad, l.datum, naamVan(d.toegewezen)].join(" ").toLowerCase();
+    if (!hooi.includes(ZOEK.toLowerCase())) return false;
+  }
+  return true;
+}
+
+/* ---------- weergave: lijst ---------- */
+const LABELS = {open:"Open aanvragen", spoed:"Spoed", nieuw:"Nog niet opgepakt", mine:"Mijn taken", done:"Afgerond", all:"Alle aanvragen"};
+function renderFilters(){
+  const all = [...A.values()], open = all.filter(d => !STATUS_DICHT.includes(d.status));
+  const vandaag = new Date().toDateString();
+  const tiles = [
+    ["open", "Open", open.length, all.filter(d => new Date(d.ontvangen).toDateString() === vandaag).length + " vandaag binnen"],
+    ["spoed", "Spoed", open.filter(d => spoedRedenen(d).length).length, "met uitroepteken", true],
+    ["nieuw", "Nog niet opgepakt", open.filter(d => (d.status || "Nieuw") === "Nieuw").length, "status Nieuw"],
+    ["mine", "Mijn taken", IK ? open.filter(d => d.toegewezen === IK).length : 0, IK ? "op naam van " + naamVan(IK) : "kies eerst je naam"],
+    ["done", "Afgerond", all.length - open.length, all.length + " in totaal"]];
+  $("kpis").innerHTML = tiles.map(([k, l, n, sub, hot]) => `<button type="button" class="kpi${hot && n ? " hot" : ""}" data-f="${k}" aria-pressed="${FILTER === k}"><span>${l}</span><b>${n}</b><small class="hint">${esc(sub)}</small></button>`).join("");
+  $("listTitle").textContent = LABELS[FILTER] || "Aanvragen";
+}
+function renderList(){
+  renderFilters();
+  const items = [...A.values()].filter(zichtbaar).map(d => ({d, sp: spoedRedenen(d)}))
+    .sort((a, b) => (b.sp.length > 0) - (a.sp.length > 0) || String(b.d.ontvangen || "").localeCompare(String(a.d.ontvangen || "")));
+  const ul = $("list");
+  const conceptLi = CONCEPT_DOC ? `<li><button type="button" class="item" data-id="${CONCEPT}" aria-current="${SEL === CONCEPT}"><span class="it-top"><b>${esc(titelVan(CONCEPT_DOC) === "Onbekende klant" ? "Nieuwe telefonische aanvraag" : titelVan(CONCEPT_DOC))}</b><span class="pill">Concept</span></span><span class="it-meta">Nog niet opgeslagen</span></button></li>` : "";
+  if (!items.length && conceptLi) { ul.innerHTML = conceptLi; return; }
+  if (!items.length) {
+    const t = A.size === 0 ? "Nog geen aanvragen. Voeg een telefonische aanvraag toe of plak een e-mail."
+      : FILTER === "mine" && !IK ? "Kies bovenaan wie je bent om je taken te zien."
+      : FILTER === "mine" ? "Er staan geen open taken op jouw naam." : FILTER === "spoed" ? "Geen spoedaanvragen. Mooi zo." : "Geen aanvragen in deze lijst.";
+    ul.innerHTML = `<li class="hint" style="padding:8px 2px">${esc(t)}</li>`; return;
+  }
+  ul.innerHTML = conceptLi + items.map(({d, sp}) => {
+    const l = d.data?.legs?.[0] || {}, c = collega(d.toegewezen);
+    const route = [T(l.vanStad), T(l.naarStad)].filter(Boolean).join(" → ");
+    const regel1 = [fmtDate(l.datum) || "Geen datum", d.data?.pax ? T(d.data.pax) + " pers." : "", route].filter(Boolean).join(" · ");
+    const regel2 = [d.bron, tijdStr(d.ontvangen)].filter(Boolean).join(" · ");
+    return `<li><button type="button" class="item" data-id="${esc(d.id)}" aria-current="${d.id === SEL}"${c ? ` style="--who:${esc(c.kleur)}"` : ""}>
+      <span class="it-top"><b>${esc(titelVan(d))}</b>${kijkers(d.id).map(p => avatar(p, true)).join("")}<span class="pill ${esc((d.status || "Nieuw").split(" ")[0])}">${esc(d.status || "Nieuw")}</span></span>
+      <span class="it-meta">${d.data?.soort ? `<span class="soortpill">${esc(d.data.soort)}</span>` : ""}${esc(regel1)}</span>
+      <span class="it-meta">${esc(regel2)}${c ? ` · <span class="dot" style="--who:${esc(c.kleur)}"></span>${esc(c.naam)}` : ""}</span>
+      ${sp.map(s => `<span class="spoed">${esc(s)}</span>`).join("")}
+      ${c && d.bericht && d.door !== d.toegewezen && d.toegewezen === IK ? `<span class="task"><b>${esc(naamVan(d.door) || "Collega")}:</b> ${esc(d.bericht)}</span>` : ""}
+    </button></li>`;
+  }).join("");
+}
+
+/* ---------- weergave: gekozen aanvraag ---------- */
+function renderMeta(){
+  const d = cur(), concept = SEL === CONCEPT;
+  document.body.classList.toggle("open-detail", !!d || !$("pastePanel").hidden);
+  $("detail").hidden = $("rightCol").hidden = !d;
+  $("emptyState").hidden = !!d || !$("pastePanel").hidden;
+  if (!d) return;
+  $("draftBar").hidden = !concept;
+  $("d-actions").hidden = $("assignRow").hidden = $("d-log").hidden = concept;
+  if (concept) { $("d-task").hidden = true; $("handoffBox").hidden = true; }
+  renderPeerBanner();
+  $("d-titel").textContent = concept && titelVan(d) === "Onbekende klant" ? "Nieuwe telefonische aanvraag" : titelVan(d);
+  $("d-meta").textContent = [d.bron ? "Via " + d.bron.toLowerCase() : "", "binnengekomen " + tijdStr(d.ontvangen)].join(", ");
+  $("d-mail").hidden = !d.mailLink; if (d.mailLink) $("d-mail").href = d.mailLink;
+  $("d-status").value = d.status === "Offerte verstuurd" ? "Afgerond" : d.status || "Nieuw";
+  $("d-done").hidden = d.status === "Afgerond";
+  const wie = $("d-wie"), keep = wie.value;
+  wie.innerHTML = `<option value="">Kies een collega</option>` + (SET.collegas || []).filter(c => c.id !== IK).map(c => `<option value="${esc(c.id)}">${esc(c.naam)}</option>`).join("");
+  if ([...wie.options].some(o => o.value === keep)) wie.value = keep;
+  const c = collega(d.toegewezen), mijn = !!IK && d.toegewezen === IK;
+  $("d-claim").hidden = mijn; $("d-claim").textContent = c ? "Overnemen" : "Oppakken";
+  $("d-release").hidden = !mijn;
+  $("d-task").hidden = !c;
+  if (c) $("d-task").innerHTML = d.bericht && d.door && d.door !== d.toegewezen
+    ? `<span class="dot" style="--who:${esc(c.kleur)}"></span><b>${esc(naamVan(d.door) || "Collega")}</b> heeft dit doorgegeven aan <b>${esc(c.naam)}</b>: "${esc(d.bericht)}"`
+    : `<span class="dot" style="--who:${esc(c.kleur)}"></span>Opgepakt door <b>${esc(c.naam)}</b>`;
+  $("d-log").innerHTML = (d.log || []).slice(-6).reverse().map(x => `<li><time>${esc(tijdStr(x.t))}</time>${esc(x.tekst)}</li>`).join("");
+  const sp = spoedRedenen(d); $("d-spoed").hidden = !sp.length;
+  $("d-spoed").innerHTML = sp.map(s => `<span class="spoed">${esc(s)}</span>`).join("");
+  $("notesBox").hidden = d.bron !== "Telefoon"; $("klantBox").hidden = d.bron === "Telefoon";
+  $("tel-dd").textContent = new Date(d.ontvangen).toLocaleDateString("nl-NL", {day:"2-digit", month:"2-digit", year:"numeric"}).replace(/\//g, "-");
+}
+function getB(p){ const [a, b] = p.split("."); if (a === "klant") return S.klant[b] || ""; if (a === "leg") return S.legs[0]?.[b] || ""; if (a === "tel") return S.tel?.[b] || ""; return S[a] || ""; }
+function setB(p, v){ if (p === "leg.datum") v = fmtDate(v); const [a, b] = p.split("."); if (a === "klant") S.klant[b] = v; else if (a === "leg") S.legs[0][b] = v; else if (a === "tel") S.tel[b] = v; else S[a] = v; }
+function fillKlant(){ for (const k of Object.keys(emptyKlant())) $("k-" + k).value = S.klant[k] || ""; document.querySelectorAll("[data-b]").forEach(el => { el.value = el.type === "date" ? toISO(getB(el.dataset.b)) : getB(el.dataset.b); el.removeAttribute("aria-invalid"); }); }
+document.querySelectorAll("[data-b]").forEach(el => {
+  el.addEventListener("input", e => {
+    const p = e.target.dataset.b; setB(p, e.target.value);
+    if (p === "pax") $("f-pax").value = S.pax;
+    if (p === "busWens") $("f-busWens").value = S.busWens;
+    if (p === "leg.datum" && $("leg-0-datum")) $("leg-0-datum").value = toISO(S.legs[0].datum);
+    if (p === "leg.tijd" && $("leg-0-tijd")) $("leg-0-tijd").value = S.legs[0].tijd;
+    if (p === "tel.vertrekpunt" || p === "tel.bestemming") {   // zonder uitwerken toch alvast in rit 1 zetten
+      const l = S.legs[0], v = T(e.target.value).replace(/\s*\n\s*/g, ", ");
+      if (p === "tel.vertrekpunt") { l.vanAdres = v; l.vanStad = ""; l.vanGezocht = false; } else { l.naarAdres = v; l.naarStad = ""; l.naarGezocht = false; }
+      renderLegs(); return;
+    }
+    if (p.startsWith("klant.")) { const k = p.slice(6); $("k-" + k).value = S.klant[k]; $("d-titel").textContent = titelVan({data: S}); }
+    renderOut();
+  });
+  if (el.dataset.b === "tel.vertrekpunt" || el.dataset.b === "tel.bestemming") el.addEventListener("change", () => zoekRit(0));
+  el.addEventListener("input", () => el.removeAttribute("aria-invalid"));
+});
+function select(id){
+  flushSave();
+  SEL = id; const d = cur();
+  $("remoteBanner").hidden = true; $("handoffBox").hidden = true; $("claimStatus").textContent = ""; $("notesStatus").textContent = ""; $("notesStatus").classList.remove("err"); $("zoekStatus").textContent = "";
+  $("d-delConfirm").hidden = true; $("d-del").hidden = false;
+  if (d) { S = normalize(d.data); loadedStamp = d.gewijzigd || null; fillKlant(); fillFields(); }
+  renderMeta(); renderList(); pushPresence();
+}
+function logEntry(tekst){ return {t: new Date().toISOString(), tekst: (naamVan(IK) ? naamVan(IK) + ": " : "") + tekst}; }
+async function patchSel(patch, tekst){
+  const d = SEL === CONCEPT ? null : A.get(SEL); if (!d) return;
+  const full = {...patch, gewijzigd: new Date().toISOString(), sessie: SESSION, bewerktDoor: mijnNaam()};
+  if (tekst) full.log = [...(d.log || []), logEntry(tekst)].slice(-40);
+  Object.assign(d, full); renderMeta(); renderList();
+  await store.update(SEL, full);
+}
+
+/* wie is er online (live, niets wordt bewaard) */
+let ROOM = null, PEERS = [];
+const mijnNaam = () => naamVan(IK) || ME_NAAM || "Collega";
+let ME_NAAM = "";
+const kleurOk = k => /^#[0-9a-f]{6}$/i.test(String(k || "")) ? k : "";
+const initialen = n => String(n || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+function avatar(p, sm){ const n = String(p.presence?.naam || "Collega").slice(0, 40), k = kleurOk(p.presence?.kleur);
+  return `<span class="av${sm ? " sm" : ""}" title="${esc(n)}${p.isMe ? " (jij)" : ""}"${k ? ` style="--who:${k}"` : ""}>${esc(initialen(n))}</span>`; }
+const kijkers = id => PEERS.filter(p => p.by !== IK && p.presence?.sel === id);
+function pushPresence(){ CH?.track({naam: mijnNaam(), kleur: collega(IK)?.kleur || "", sel: SEL && SEL !== CONCEPT ? SEL : null}).catch(() => {}); }
+function renderPeers(){
+  const uniek = []; const seen = new Set();
+  for (const p of PEERS) { const k = p.isMe ? "me" : (p.by || p.peer); if (!seen.has(k)) { seen.add(k); uniek.push(p); } }
+  $("peers").innerHTML = uniek.length > 1 ? uniek.map(p => avatar(p)).join("") : "";
+}
+function renderPeerBanner(){
+  const k = SEL && SEL !== CONCEPT ? kijkers(SEL) : [];
+  const namen = [...new Set(k.map(p => String(p.presence?.naam || "Collega").slice(0, 40)))];
+  $("peerBanner").hidden = !namen.length;
+  $("peerBanner").textContent = namen.length ? namen.join(" en ") + (namen.length > 1 ? " hebben" : " heeft") + " deze aanvraag ook open. Wijzigingen worden voor iedereen opgeslagen." : "";
+}
+let CH = null;
+function startPresence(){
+  CH = SB.channel("aanwezig", {config: {presence: {key: IK + ":" + SESSION}}});
+  CH.on("presence", {event: "sync"}, () => {
+    PEERS = Object.entries(CH.presenceState()).map(([k, arr]) => ({peer: k, by: k.split(":")[0], isMe: k.split(":")[0] === IK, presence: arr[0] || {}}));
+    renderPeers(); renderList(); renderPeerBanner();
+  }).subscribe(st => { if (st === "SUBSCRIBED") pushPresence(); });
+}
+
+/* gegevens van de opslag binnen */
+function onList(docs){
+  A = new Map(docs.map(d => [d.id, d]));
+  if (SEL && SEL !== CONCEPT && !A.has(SEL)) { SEL = null; }
+  else if (SEL && SEL !== CONCEPT) {
+    const d = A.get(SEL);
+    if (d.sessie !== SESSION && !saveTimer && d.gewijzigd !== loadedStamp) {
+      const bezig = document.activeElement && $("detail").contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+      if (bezig) { $("remoteText").textContent = (d.bewerktDoor || "Een collega") + " heeft deze aanvraag net aangepast."; $("remoteBanner").hidden = false; }
+      else { S = normalize(d.data); loadedStamp = d.gewijzigd; fillKlant(); fillFields(); $("remoteBanner").hidden = true; }
+    }
+    else if (saveTimer) d.data = normalize(S);
+  }
+  renderMeta(); renderList();
+}
+function onSet(s){
+  SET = Object.assign({...DEF_SET}, s || {});
+  renderIk(); renderBeheer(); renderMeta(); renderList();
+}
+function renderIk(){
+  const c = collega(IK); $("ik").innerHTML = c ? `<option value="${esc(IK)}">${esc(c.naam)}</option>` : ""; $("ik").value = IK;
+  $("me").innerHTML = c ? avatar({presence: {naam: c.naam, kleur: c.kleur}}, true) + esc(c.naam) : "";
+}
+
+/* ---------- beheer ---------- */
+let DRAFT = null;
+function renderBeheer(force){
+  if (DRAFT && !force) return;
+  DRAFT = {collegas: (SET.collegas || []).map(c => ({...c}))};
+  $("s-klanten").value = SET.spoedKlanten || ""; $("s-dagen").value = SET.spoedDagen ?? ""; $("s-pax").value = SET.spoedPax ?? "";
+  renderColList(); renderKoppelingen();
+}
+function renderColList(){
+  $("colList").innerHTML = DRAFT.collegas.map((c, i) => `<div class="colrow">
+      <input type="color" id="col-k-${i}" data-ci="${i}" data-cf="kleur" value="${esc(kleurOk(c.kleur) || "#1d3a8a")}" aria-label="Kleur van ${esc(c.naam)}">
+      <input id="col-n-${i}" data-ci="${i}" data-cf="naam" value="${esc(c.naam)}" placeholder="Naam">
+      <span class="hint" style="overflow-wrap:anywhere">${esc(c.email || "")}</span></div>`).join("");
+}
+function renderKoppelingen(){
+  const k = [["Google Maps (adressen en kilometers)", CFG.google], ["Postcode-API", CFG.postcode], ["Uitlezen met Claude", CFG.ai], ["Microsoft 365-mailbox", CFG.mailbox]];
+  $("koppelingen").innerHTML = k.map(([n, ok]) => `<li class="${ok ? "" : "off"}">${esc(n)}: ${ok ? "gekoppeld" : "nog niet ingesteld"}</li>`).join("");
+  $("mailNu").hidden = !CFG.mailbox;
+}
+$("colList").addEventListener("input", e => { const d = e.target.dataset; if (d.ci != null) DRAFT.collegas[+d.ci][d.cf] = e.target.value; });
+$("setSave").onclick = async () => {
+  const s = {spoedKlanten: $("s-klanten").value, spoedDagen: parseInt($("s-dagen").value, 10) || 0, spoedPax: parseInt($("s-pax").value, 10) || 0};
+  $("setSave").disabled = true;
+  try {
+    await store.saveSet(s);
+    for (const c of DRAFT.collegas) { const o = collega(c.id); if (o && (T(c.naam) !== o.naam || c.kleur !== o.kleur) && T(c.naam)) await store.saveCollega({id: c.id, naam: T(c.naam), kleur: c.kleur}); }
+    DRAFT = null; setTopStatus("Opgeslagen.");
+  } catch (e) { setTopStatus("Opslaan is niet gelukt: " + (e?.message || "onbekende fout"), true); }
+  finally { $("setSave").disabled = false; }
+};
+$("invBtn").onclick = async () => {
+  const st = $("invStatus"); $("invBtn").disabled = true; st.textContent = "Versturen…";
+  try { await api("/api/uitnodigen", {method: "POST", body: JSON.stringify({email: T($("inv-email").value), naam: T($("inv-naam").value)})});
+        st.textContent = "Uitnodiging verstuurd."; $("inv-email").value = ""; $("inv-naam").value = ""; }
+  catch (e) { st.textContent = e.message; } finally { $("invBtn").disabled = false; }
+};
+
+/* ---------- navigatie en acties ---------- */
+function showView(v){
+  $("viewInbox").hidden = $("kpis").hidden = v !== "inbox"; $("viewBeheer").hidden = v !== "beheer";
+  $("navInbox").setAttribute("aria-pressed", v === "inbox"); $("navBeheer").setAttribute("aria-pressed", v === "beheer");
+  if (v === "beheer") renderBeheer(true);
+}
+$("backBtn").onclick = () => { flushSave(); if (SEL !== CONCEPT) SEL = null; else SEL = null; $("pastePanel").hidden = true; renderMeta(); renderList(); pushPresence(); window.scrollTo(0, 0); };
+$("navInbox").onclick = () => showView("inbox");
+$("navBeheer").onclick = () => showView("beheer");
+$("kpis").addEventListener("click", e => { const f = e.target.closest("button")?.dataset.f; if (f) { FILTER = FILTER === f && f !== "open" ? "open" : f; ls.set("inbox-filter", FILTER); renderList(); } });
+$("zoek").addEventListener("input", e => { ZOEK = e.target.value.trim(); renderList(); });
+$("list").addEventListener("click", e => { const b = e.target.closest("button[data-id]"); if (b) { $("pastePanel").hidden = true; select(b.dataset.id); if (innerWidth <= 860) window.scrollTo(0, 0); } });
+
+async function nieuweAanvraag(bron, data, tekst, extra){
+  const now = new Date().toISOString();
+  const doc = {bron, ontvangen: now, status: "Nieuw", toegewezen: "", bericht: "", door: "", data: normalize(data), gewijzigd: now, sessie: SESSION, ...(extra || {}),
+               log: [logEntry(tekst)]};
+  const id = await store.add(doc);
+  if (!A.has(id)) A.set(id, {id, ...doc});
+  select(id); return id;
+}
+$("newPhone").onclick = () => {
+  $("pastePanel").hidden = true;
+  if (!CONCEPT_DOC) CONCEPT_DOC = {id: CONCEPT, bron: "Telefoon", ontvangen: new Date().toISOString(), status: "Nieuw", data: EMPTY(), log: []};
+  select(CONCEPT); $("t-naam").focus();
+};
+function autoSoort(c){ if (c.multiDay || T(S.retourDatum)) return "Meerdaagse reis"; if (c.wacht != null && c.wacht >= 180) return "Dagtocht"; return "Standaard rit"; }
+$("soortSeg").addEventListener("click", e => { const b = e.target.closest("button[data-soort]"); if (!b) return; S.soort = S.soort === b.dataset.soort ? "" : b.dataset.soort; renderOut(); renderList(); });
+$("f-leegAfw").addEventListener("change", e => { S.leegAfw = e.target.checked; if (!S.leegAfw) { S.leegTerug = ""; S.leegTerugDuur = ""; } fillFields(); scheduleSave(); });
+$("d-done").onclick = () => patchSel({status: "Afgerond"}, "Offerte gemaakt, afgerond (verder in het ERP-pakket)");
+$("draftSave").onclick = async () => {
+  const k = S.klant, fout = [];
+  [["t-naam", k.bedrijf, "naam klant"], ["t-tav", k.naam, "t.a.v."], ["t-tel", k.telefoon, "telefoon"], ["t-email", k.email, "e-mail"]].forEach(([id, v, n]) => {
+    const ok = id === "t-email" ? /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(T(v)) : !!T(v);
+    $(id).toggleAttribute("aria-invalid", !ok); if (!ok) $(id).setAttribute("aria-invalid", "true"); if (!ok) fout.push(n); });
+  if (fout.length) { $("notesStatus").textContent = "Vul nog in: " + fout.join(", ") + "."; $("notesStatus").classList.add("err"); return; }
+  if (!collega(IK)) { $("notesStatus").textContent = "Kies eerst bovenaan je naam, dan wordt de aanvraag aan jou gekoppeld."; $("ik").focus(); return; }
+  $("notesStatus").classList.remove("err");
+  const data = normalize(S); $("draftSave").disabled = true;
+  try { CONCEPT_DOC = null; SEL = null; await nieuweAanvraag("Telefoon", data, "Telefonische aanvraag opgeslagen", {toegewezen: IK, door: IK, status: "In behandeling"}); }
+  catch (e) { setTopStatus("Opslaan is niet gelukt (" + (e?.code || "fout") + ").", true); }
+  finally { $("draftSave").disabled = false; }
+};
+$("draftCancel").onclick = () => { CONCEPT_DOC = null; SEL = null; renderMeta(); renderList(); pushPresence(); };
+$("remoteLoad").onclick = () => { const d = A.get(SEL); if (d) { S = normalize(d.data); loadedStamp = d.gewijzigd; fillKlant(); fillFields(); } $("remoteBanner").hidden = true; };
+$("newPaste").onclick = () => { flushSave(); SEL = null; $("pastePanel").hidden = false; renderMeta(); renderList(); $("emptyState").hidden = true; window.scrollTo(0, 0); $("pasteText").focus(); };
+$("pasteCancel").onclick = () => { $("pasteText").value = ""; $("pastePanel").hidden = true; $("pasteStatus").textContent = ""; renderMeta(); };
+
+$("d-status").onchange = e => patchSel({status: e.target.value}, "Status: " + e.target.value);
+function eerstNaam(st){ if (collega(IK)) return true; $(st).textContent = "Kies eerst bovenaan je naam."; $("ik").focus(); return false; }
+$("d-claim").onclick = () => {
+  $("claimStatus").textContent = ""; if (!eerstNaam("claimStatus")) return;
+  const d = A.get(SEL), patch = {toegewezen: IK, bericht: "", door: IK};
+  if ((d.status || "Nieuw") === "Nieuw") patch.status = "In behandeling";
+  $("handoffBox").hidden = true;
+  patchSel(patch, d.toegewezen ? "Overgenomen" : "Opgepakt");
+};
+$("d-release").onclick = () => patchSel({toegewezen: "", bericht: "", door: ""}, "Losgelaten");
+$("d-handoff").onclick = () => { $("claimStatus").textContent = ""; if (!eerstNaam("claimStatus")) return; $("handoffBox").hidden = false; $("handoffStatus").textContent = ""; $("d-wie").focus(); };
+$("d-handoffCancel").onclick = () => { $("handoffBox").hidden = true; $("d-bericht").value = ""; };
+$("d-assign").onclick = () => {
+  const id = $("d-wie").value, msg = T($("d-bericht").value), d = A.get(SEL);
+  if (!id) { $("handoffStatus").textContent = "Kies naar welke collega het moet."; return; }
+  if (!msg) { $("handoffStatus").textContent = "Schrijf er een bericht bij, zodat je collega weet wat er moet gebeuren."; $("d-bericht").focus(); return; }
+  const patch = {toegewezen: id, bericht: msg, door: IK};
+  if ((d.status || "Nieuw") === "Nieuw") patch.status = "In behandeling";
+  $("handoffBox").hidden = true; $("d-bericht").value = "";
+  patchSel(patch, "Doorgegeven aan " + naamVan(id) + ': "' + msg + '"');
+};
+$("d-del").onclick = () => { $("d-del").hidden = true; $("d-delConfirm").hidden = false; };
+$("d-delNo").onclick = () => { $("d-del").hidden = false; $("d-delConfirm").hidden = true; };
+$("d-delYes").onclick = async () => { const id = SEL; clearTimeout(saveTimer); saveTimer = null; SEL = null; A.delete(id); renderMeta(); renderList(); await store.del(id); };
+
+document.querySelectorAll("[data-kl]").forEach(el => el.addEventListener("input", e => { S.klant[e.target.dataset.kl] = e.target.value; const d = A.get(SEL); if (d) $("d-titel").textContent = T(S.klant.bedrijf) || T(S.klant.naam) || "Onbekende klant"; renderOut(); }));
+
+/* ---------- uitlezen met Claude ---------- */
+function landen(o){ const r = {}; if (o && typeof o === "object") for (const [c, v] of Object.entries(o)) { const n = Number(v); if (/^[A-Z]{2}$/.test(String(c).toUpperCase()) && n > 0) r[String(c).toUpperCase()] = Math.round(n); } return r; }
+function verwerkUitlezing(d){
+  const kmv = v => typeof v === "number" && v > 0 ? String(Math.round(v)) : "";
+  const mv = v => typeof v === "number" && v > 0 ? Math.floor(v / 60) + ":" + String(Math.round(v) % 60).padStart(2, "0") : "";
+  const str = v => v == null ? "" : String(v).trim(), list = v => (Array.isArray(v) ? v : []).map(str).filter(Boolean).join("\n");
+  const legs = (Array.isArray(d?.ritten) ? d.ritten : []).map(r => ({...emptyLeg(),
+    datum:fmtDate(r?.datum), vanLocatie:str(r?.vanLocatie), vanAdres:str(r?.vanAdres), vanPostcode:str(r?.vanPostcode), vanStad:str(r?.vanStad), vanGezocht:r?.vanGezocht === true,
+    naarLocatie:str(r?.naarLocatie), naarAdres:str(r?.naarAdres), naarPostcode:str(r?.naarPostcode), naarStad:str(r?.naarStad), naarGezocht:r?.naarGezocht === true,
+    tijd: /^\d{1,2}:\d{2}$/.test(str(r?.tijd)) ? str(r.tijd).padStart(5, "0") : "", type: r?.type === "aankomst" ? "aankomst" : "vertrek",
+    km: kmv(r?.km), duur: mv(r?.minuten), kmGeschat: !!(kmv(r?.km) || mv(r?.minuten)), kmLand: landen(r?.kmPerLand)}));
+  legs.forEach(cleanLeg);
+  for (let i = legs.length - 1; i > 0; i--) if (legKey(legs[i]) === legKey(legs[i - 1])) legs.splice(i, 1);
+  if (legs.length === 2) {
+    const a = legs[0], b = legs[1], q = (l, sd) => SIDE.slice(0, 4).map(f => l[sd + f]).join("|"), same = q(b, "van") === q(a, "van") && q(b, "naar") === q(a, "naar");
+    if (same || (q(b, "van") === "|||" && q(b, "naar") === "|||")) { const t = cp({}, "x", a, "naar"); cp(b, "naar", a, "van"); cp(b, "van", t, "x"); }
+  }
+  let retour = false, rT = "", rD = "";
+  if (legs.length === 2) {
+    const a = legs[0], b = legs[1], q = (l, sd) => SIDE.slice(1, 4).map(f => T(l[sd + f]).toLowerCase()).join("|");
+    if (q(b, "van") === q(a, "naar") && q(b, "naar") === q(a, "van") && b.type === "vertrek") { retour = true; rT = b.tijd; rD = b.datum === a.datum ? "" : b.datum; legs.length = 1; }
+  }
+  const lH = kmv(d?.leegHeenKm), lT = kmv(d?.leegTerugKm), lHD = mv(d?.leegHeenMin), lTD = mv(d?.leegTerugMin);
+  const k = emptyKlant(); for (const f in k) k[f] = str(d?.klant?.[f]);
+  return {...EMPTY(), soort: ["Standaard rit","Dagtocht","Meerdaagse reis"].includes(str(d?.soort)) ? str(d.soort) : "", klant:k, pax:str(d?.passagiers), busWens:BUSSEN[str(d?.busWens)] ? str(d.busWens) : "",
+          wensen:list(d?.wensen), nodig:list(d?.nogNodig), leegHeen:lH, leegTerug:lT, leegHeenDuur:lHD, leegTerugDuur:lTD,
+          leegGeschat:!!(lH || lT || lHD || lTD), retour, retourTijd:rT, retourDatum:rD, legs: legs.length ? legs : [emptyLeg()]};
+}
+/* adressen en afstanden van één rit ophalen via Google Maps (server) */
+let zoekTimer = null, zoekNr = 0;
+function zoekRit(i){ clearTimeout(zoekTimer); zoekTimer = setTimeout(() => doeZoek(i), 300); }
+async function doeZoek(i){
+  const L0 = S.legs[i]; if (!L0 || !CFG.google) return;
+  const van = placeQ(L0, "van"), naar = placeQ(L0, "naar");
+  if (!T(van) || !T(naar)) return;
+  const id = SEL, nr = ++zoekNr, st = $("zoekStatus"); st.textContent = "Adressen en afstanden ophalen…";
+  try {
+    const d = await api("/api/rit", {method: "POST", body: JSON.stringify({van, naar, leegHeen: i === 0 && !S.leegAfw, leegTerug: i === S.legs.length - 1 && !S.retour && !S.leegAfw})});
+    const L = S.legs[i]; if (nr !== zoekNr || SEL !== id || !L) return;
+    const hm = m => Math.floor(m / 60) + ":" + String(Math.round(m) % 60).padStart(2, "0");
+    for (const sd of ["van", "naar"]) {
+      const o = d?.[sd]; if (!o || !o.gevonden || !T(o.adres)) continue;
+      const nieuw = T(o.adres) !== T(L[sd + "Adres"]) || (T(o.stad) && T(o.stad) !== T(L[sd + "Stad"]));
+      L[sd + "Adres"] = T(o.adres); if (T(o.stad)) L[sd + "Stad"] = T(o.stad); L[sd + "Postcode"] = ""; L[sd + "Locatie"] = "";
+      if (nieuw) L[sd + "Gezocht"] = true;
+    }
+    if (d.km > 0) { L.km = String(d.km); L.duur = hm(d.minuten); L.kmGeschat = true; L.kmLand = landen(d.kmPerLand); }
+    if (!S.leegAfw) {
+      if (d.leegHeenKm > 0) { S.leegHeen = String(d.leegHeenKm); S.leegHeenDuur = hm(d.leegHeenMin); S.leegGeschat = true; }
+      if (d.leegTerugKm > 0) { S.leegTerug = String(d.leegTerugKm); S.leegTerugDuur = hm(d.leegTerugMin); }
+    }
+    fillFields(); scheduleSave();
+    st.textContent = d.van?.gevonden && d.naar?.gevonden ? "Opgehaald via Google Maps." : "Niet elk adres gevonden. Vul het zelf aan.";
+  } catch (e) { if (nr === zoekNr) st.textContent = "Ophalen lukte niet: " + e.message; }
+}
+
+/* postcode + huisnummer => straat en plaats */
+async function zoekPostcode(waar){
+  const v = T(S.klant.pc).toUpperCase(), m = v.match(/^(\d{4})\s?([A-Z]{2})[\s,]*(\d+\s*[A-Z]{0,3})$/);
+  const st = waar === "t" ? $("notesStatus") : $("zoekStatus");
+  if (!v) return; if (!m) { st.textContent = "Typ postcode en huisnummer, bijv. 4454 PZ 8."; return; }
+  st.textContent = "Adres ophalen…";
+  try {
+    const r = await api("/api/postcode?postcode=" + m[1] + m[2] + "&number=" + encodeURIComponent(m[3].replace(/\s+/g, "")));
+    S.klant.adres = r.adres; S.klant.postcodePlaats = r.stad; S.klant.pc = m[1] + " " + m[2] + " " + m[3].trim();
+    fillKlant(); renderOut(); st.textContent = "Adres gevonden.";
+  } catch (e) { st.textContent = e.status === 404 ? "Geen adres gevonden bij deze postcode en dit huisnummer." : "Ophalen lukte niet: " + e.message; }
+}
+document.querySelectorAll("[data-pc]").forEach(el => el.addEventListener("change", () => zoekPostcode(el.dataset.pc)));
+
+/* uitlezen via de server (Claude) */
+let pasteCtl = null;
+$("pasteStop").onclick = () => pasteCtl?.abort();
+$("pasteBtn").onclick = async () => {
+  const box = $("pasteText"), text = box.value.trim(), st = $("pasteStatus");
+  if (!text) { st.textContent = "Plak eerst een e-mail."; return; }
+  pasteCtl = new AbortController(); $("pasteBtn").disabled = true; $("pasteStop").hidden = false; st.textContent = "Bezig met uitlezen en routes ophalen…";
+  try {
+    const r = await api("/api/uitlezen", {method: "POST", body: JSON.stringify({tekst: text, verwerk: true}), signal: pasteCtl.signal});
+    const bron = $("pasteBron").value;
+    box.value = ""; $("pastePanel").hidden = true; st.textContent = "";
+    await nieuweAanvraag(bron, r.data, "Aanvraag uitgelezen (" + bron.toLowerCase() + ")");
+  } catch (e) { st.textContent = e.name === "AbortError" ? "Gestopt." : "Uitlezen lukte niet: " + e.message; }
+  finally { $("pasteBtn").disabled = false; $("pasteStop").hidden = true; }
+};
+$("notesBtn").onclick = async () => {
+  const st = $("notesStatus"), id = SEL, k = S.klant, t = S.tel, l0 = S.legs[0] || {};
+  const regels = [["Naam klant", k.bedrijf], ["T.a.v.", k.naam], ["Adres", k.adres], ["Woonplaats", k.postcodePlaats], ["Telefoon", k.telefoon], ["E-mail", k.email],
+    ["Datum rit", l0.datum], ["Vertrekpunt", t.vertrekpunt], ["Vertrektijd", l0.tijd], ["Thuiskomst (gewenste aankomsttijd terug bij het vertrekpunt)", t.thuiskomst],
+    ["Bestemming", t.bestemming], ["Aantal personen", S.pax], ["Bustype", S.busWens], ["Programma", t.programma]].filter(r => T(r[1]));
+  if (!T(t.vertrekpunt) && !T(t.bestemming)) { st.textContent = "Vul eerst minimaal het vertrekpunt en de bestemming in."; return; }
+  $("notesBtn").disabled = true; st.textContent = "Bezig met uitwerken…";
+  try {
+    const r = await api("/api/uitlezen", {method: "POST", body: JSON.stringify({tekst: "Telefonische offerte-aanvraag:\n" + regels.map(x => x[0] + ": " + T(x[1])).join("\n"), verwerk: true})});
+    if (SEL !== id) return;
+    const oud = S, nieuw = normalize(r.data);
+    for (const f of Object.keys(oud.klant)) if (T(oud.klant[f])) nieuw.klant[f] = oud.klant[f];   // wat je zelf typte gaat voor
+    if (T(oud.pax)) nieuw.pax = oud.pax; if (T(oud.busWens)) nieuw.busWens = oud.busWens; if (oud.soort) nieuw.soort = oud.soort;
+    S = {...nieuw, tel: oud.tel, notities: oud.notities};
+    fillKlant(); fillFields(); scheduleSave(); flushSave();
+    $("d-titel").textContent = titelVan({data: S});
+    st.textContent = "Uitgewerkt. Controleer de ritten en het reisprogramma.";
+  } catch (e) { st.textContent = "Uitwerken lukte niet: " + e.message; }
+  finally { $("notesBtn").disabled = false; }
+};
+
+/* mailbox: nieuwe aanvragen ophalen zolang het dashboard open is (de server doet het ook op schema) */
+let mailBezig = false;
+async function mailCheck(handmatig){
+  if (!CFG.mailbox || mailBezig) return; mailBezig = true;
+  try {
+    const r = await api("/api/mail-sync");
+    const t = new Date().toLocaleTimeString("nl-NL", {hour: "2-digit", minute: "2-digit"});
+    $("mailText").textContent = "Mailbox gecontroleerd om " + t + (r.nieuw ? ", " + r.nieuw + " nieuwe aanvraag" + (r.nieuw > 1 ? "en" : "") : "") + ".";
+    if (handmatig) $("mailNuStatus").textContent = r.nieuw ? r.nieuw + " nieuw" : "Geen nieuwe aanvragen.";
+    if (r.wachtend > 0) setTimeout(() => mailCheck(), 4000);
+  } catch (e) { $("mailText").textContent = "Mailbox controleren lukte niet: " + e.message; }
+  finally { mailBezig = false; }
+}
+$("mailNu").onclick = () => mailCheck(true);
+
+/* ---------- inloggen en starten ---------- */
+const toon = (id) => { $("login").hidden = id === "app"; $("app").hidden = id !== "app"; $("loginForm").hidden = id !== "login"; $("pwForm").hidden = id !== "pw"; };
+async function boot(){
+  try { const r = await fetch("/api/config"); CFG = await r.json(); if (!r.ok) throw new Error(CFG.fout || "Fout " + r.status); }
+  catch (e) { toon("login"); $("li-status").textContent = "De site is nog niet volledig ingesteld: " + e.message; $("li-btn").disabled = true; return; }
+  SB = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+  const viaLink = /type=(invite|recovery|signup)/.test(location.hash);
+  SB.auth.onAuthStateChange(ev => { if (ev === "PASSWORD_RECOVERY") toon("pw"); });
+  const {data: {session}} = await SB.auth.getSession();
+  if (session && viaLink) { history.replaceState(null, "", location.pathname); toon("pw"); return; }
+  if (!session) { toon("login"); $("li-email").focus(); return; }
+  await startApp(session);
+}
+async function startApp(session){
+  IK = session.user.id; ME_NAAM = session.user.email || "";
+  toon("app"); renderList(); renderMeta();
+  try { await store.start(onList, onSet); }
+  catch (e) { setTopStatus("Gegevens laden lukte niet: " + (e?.message || "") + ". Is schema.sql in Supabase uitgevoerd?", true); return; }
+  startPresence(); renderKoppelingen();
+  $("modeBadge").textContent = "Live"; $("localNotice").hidden = true;
+  if (CFG.mailbox) { mailCheck(); setInterval(mailCheck, 3 * 60 * 1000); }
+  else $("mailText").innerHTML = "<b>Mailbox nog niet gekoppeld.</b> Nieuwe aanvragen plak je voorlopig met \"E-mail plakken\".";
+}
+$("loginForm").onsubmit = async e => {
+  e.preventDefault(); const st = $("li-status"); $("li-btn").disabled = true; st.textContent = "Inloggen…";
+  const {data, error} = await SB.auth.signInWithPassword({email: T($("li-email").value), password: $("li-pw").value});
+  $("li-btn").disabled = false;
+  if (error) { st.textContent = /invalid/i.test(error.message) ? "E-mailadres of wachtwoord klopt niet." : error.message; return; }
+  st.textContent = ""; startApp(data.session);
+};
+$("li-vergeten").onclick = async () => {
+  const st = $("li-status"), email = T($("li-email").value);
+  if (!email) { st.textContent = "Vul eerst je e-mailadres in."; $("li-email").focus(); return; }
+  const {error} = await SB.auth.resetPasswordForEmail(email, {redirectTo: location.origin});
+  st.textContent = error ? error.message : "Als dit adres bekend is, krijg je een mail om een nieuw wachtwoord te kiezen.";
+};
+$("pwForm").onsubmit = async e => {
+  e.preventDefault(); const st = $("pw-status"), a = $("pw1").value, b = $("pw2").value;
+  if (a.length < 8) { st.textContent = "Kies minimaal 8 tekens."; return; }
+  if (a !== b) { st.textContent = "De twee wachtwoorden zijn niet gelijk."; return; }
+  $("pw-btn").disabled = true;
+  const {error} = await SB.auth.updateUser({password: a});
+  $("pw-btn").disabled = false;
+  if (error) { st.textContent = error.message; return; }
+  const {data: {session}} = await SB.auth.getSession(); startApp(session);
+};
+$("logout").onclick = async () => { flushSave(); await SB.auth.signOut(); location.reload(); };
+boot();
+
+</script>
+</body>
+</html>

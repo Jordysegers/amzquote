@@ -1,0 +1,7 @@
+{
+  "name": "amzquote",
+  "private": true,
+  "type": "module",
+  "description": "AMZ Touringcars offerte-inbox",
+  "engines": {"node": ">=20"}
+}
