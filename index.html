@@ -208,7 +208,22 @@ details.more[open] summary::before{transform:rotate(90deg)}
 .seg.mini button{font-size:12.5px;padding:4px 10px}
 .totals small.sub{display:block;font:500 11.5px var(--body);color:var(--muted);margin-top:2px}
 .right .totals{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+/* compacter formulier */
+.paper{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 12px}
+.paper .s2{grid-column:span 2}
+.paper .businfo{font-size:13px;color:var(--muted);margin:-2px 0 0}
+.paper label{gap:4px}
+.paper input,.paper select{padding:7px 9px}
+.paper textarea{min-height:56px}
+.terug{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tlabel{display:flex;align-items:center;justify-content:flex-start;gap:10px;min-height:19px;font-size:13px;font-weight:500;color:var(--muted);flex-wrap:wrap}
+.seg.mini{padding:2px;flex-wrap:nowrap}
+.seg.mini button{font-size:11.5px;padding:2px 7px}
 #retourRow{background:var(--sunken);border-radius:10px;padding:10px 12px}
+.ritsum{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--sunken);border-radius:10px;padding:10px 12px;font-size:14px;flex-wrap:wrap}
+@media (max-width:700px){.paper{grid-template-columns:repeat(2,minmax(0,1fr))}.paper .s2{grid-column:span 2}}
+@media (max-width:480px){.paper{grid-template-columns:minmax(0,1fr)}.paper .s2{grid-column:auto}}
 /* ---------- responsive ---------- */
 .assign{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) auto;gap:10px;align-items:end}
 .cols.beheer{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -371,34 +386,31 @@ details.more[open] summary::before{transform:rotate(90deg)}
         <section id="notesBox" class="telform" hidden>
           <div class="row" style="justify-content:space-between"><h2>Offerte-aanvraag</h2><span class="hint">d.d. <span id="tel-dd"></span></span></div>
           <div class="paper">
-            <label class="req">Naam klant<input id="t-naam" data-b="klant.bedrijf" required></label>
+            <label class="req s2">Naam klant<input id="t-naam" data-b="klant.bedrijf" required></label>
             <label class="req">T.a.v.<input id="t-tav" data-b="klant.naam" required></label>
             <label class="req">Telefoon<input id="t-tel" data-b="klant.telefoon" inputmode="tel" required></label>
-            <label class="req">E-mail<input id="t-email" data-b="klant.email" type="email" required></label>
-            <label>Postcode + huisnummer<input id="t-pc" data-b="klant.pc" data-pc="t" placeholder="4454 PZ 8"></label>
+            <label class="req s2">E-mail<input id="t-email" data-b="klant.email" type="email" required></label>
+            <label>Postcode + nr<input id="t-pc" data-b="klant.pc" data-pc="t" placeholder="4454 PZ 8"></label>
             <label>Adres<input id="t-adres" data-b="klant.adres"></label>
             <label>Woonplaats<input id="t-woonplaats" data-b="klant.postcodePlaats"></label>
             <hr>
             <label>Datum rit<input id="t-datum" type="date" data-b="leg.datum"></label>
-            <label>Aantal passagiers<input id="t-pax" data-b="pax" inputmode="numeric"></label>
+            <label>Passagiers<input id="t-pax" data-b="pax" inputmode="numeric"></label>
             <label>Bustype<select id="t-bus" data-b="busWens">
               <option value="">Voordeligste optie</option>
               <option>Club Coach</option><option>Dubbeldekker</option><option>Groepsvervoer bus</option><option>Midibus</option>
               <option>Minibus</option><option>Rolstoeltouringcar</option><option>Touringcar</option><option>Touringcar XL</option>
             </select></label>
-            <p class="businfo" id="t-businfo" style="align-self:end;padding-bottom:9px"></p>
-            <label class="wide">Vertrekpunt<input id="t-vertrekpunt" data-b="tel.vertrekpunt" data-ac="tel" data-side="van" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" placeholder="Adres, postcode + huisnr, of een naam zoals 'Station Goes'"></label>
+            <p class="businfo wide" id="t-businfo"></p>
+            <label class="wide">Vertrekpunt<input id="t-vertrekpunt" data-b="tel.vertrekpunt" data-ac="tel" data-side="van" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" placeholder="Adres, postcode + nr of naam"></label>
+            <label class="wide">Bestemming<input id="t-bestemming" data-b="tel.bestemming" data-ac="tel" data-side="naar" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" placeholder="Adres of naam, bijv. Bobbejaanland"></label>
             <label>Vertrektijd<input id="t-vertrektijd" type="time" data-b="leg.tijd"></label>
-            <div class="wide"><span class="flabel">Terug</span><div class="terug">
-              <span class="seg mini" role="group" aria-label="Soort terugtijd"><button type="button" data-rt="vertrek">Vertrek retour</button><button type="button" data-rt="aankomst">Thuiskomst</button></span>
-              <div class="grid g2">
-                <label><span class="sr">Tijd terug</span><input id="t-terugTijd" type="time" data-b="retourTijd" aria-label="Tijd terug"></label>
-                <label><span class="sr">Datum terug</span><input id="t-terugDatum" type="date" data-b="retourDatum" aria-label="Datum terug" title="Leeg laten = zelfde dag"></label>
-              </div>
-              <span class="hint">Datum leeg laten = zelfde dag terug</span>
-            </div></div>
-            <label class="wide">Bestemming<input id="t-bestemming" data-b="tel.bestemming" data-ac="tel" data-side="naar" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" placeholder="Adres, of een naam zoals 'Bobbejaanland'"></label>
-            <label class="wide">Programma<textarea id="t-programma" data-b="tel.programma" style="min-height:70px" placeholder="Wat gaat de groep doen, tussenstops, wensen"></textarea></label>
+            <div class="terug s2">
+              <div class="tlabel"><span>Terug</span><span class="seg mini" role="group" aria-label="Soort terugtijd"><button type="button" data-rt="vertrek">Vertrek retour</button><button type="button" data-rt="aankomst">Thuiskomst</button></span></div>
+              <input id="t-terugTijd" type="time" data-b="retourTijd" aria-label="Tijd terug">
+            </div>
+            <label class="terugdatum">Datum terug<input id="t-terugDatum" type="date" data-b="retourDatum"></label>
+            <label class="wide">Programma<textarea id="t-programma" data-b="tel.programma" rows="2" placeholder="Wat gaat de groep doen, tussenstops, wensen"></textarea></label>
           </div>
           <div class="row"><button class="primary small" id="notesBtn" hidden>Uitwerken</button><span class="status" id="notesStatus"></span></div>
         </section>
@@ -406,16 +418,16 @@ details.more[open] summary::before{transform:rotate(90deg)}
         <section id="klantBox">
           <h2>Offerte-aanvraag</h2>
           <div class="paper">
-            <label class="req">Naam klant<input id="k-bedrijf" data-kl="bedrijf"></label>
+            <label class="req s2">Naam klant<input id="k-bedrijf" data-kl="bedrijf"></label>
             <label class="req">T.a.v.<input id="k-naam" data-kl="naam"></label>
             <label class="req">Telefoon<input id="k-telefoon" data-kl="telefoon"></label>
-            <label class="req">E-mail<input id="k-email" data-kl="email"></label>
-            <label>Postcode + huisnummer<input id="k-pc" data-kl="pc" data-pc="k" placeholder="4454 PZ 8"></label>
+            <label class="req s2">E-mail<input id="k-email" data-kl="email"></label>
+            <label>Postcode + nr<input id="k-pc" data-kl="pc" data-pc="k" placeholder="4454 PZ 8"></label>
             <label>Adres<input id="k-adres" data-kl="adres"></label>
             <label>Woonplaats<input id="k-postcodePlaats" data-kl="postcodePlaats"></label>
             <hr>
-            <label>Aantal passagiers<input id="f-pax" inputmode="numeric"></label>
-            <label>Bustype<select id="f-busWens">
+            <label>Passagiers<input id="f-pax" inputmode="numeric"></label>
+            <label class="s2">Bustype<select id="f-busWens">
               <option value="">Voordeligste optie</option>
               <option>Club Coach</option><option>Dubbeldekker</option><option>Groepsvervoer bus</option><option>Midibus</option>
               <option>Minibus</option><option>Rolstoeltouringcar</option><option>Touringcar</option><option>Touringcar XL</option>
@@ -427,14 +439,13 @@ details.more[open] summary::before{transform:rotate(90deg)}
         <section>
           <div class="row" style="justify-content:space-between"><h2>Uitwerking</h2><span class="status" id="zoekStatus"></span></div>
           <label class="check"><input type="checkbox" id="f-retour"> Terugweg is hetzelfde als de heenweg</label>
-          <div id="retourRow"><div class="terug">
-              <span class="seg mini" role="group" aria-label="Soort terugtijd"><button type="button" data-rt="vertrek">Vertrek retour</button><button type="button" data-rt="aankomst">Thuiskomst</button></span>
-              <div class="grid g2">
-                <label><span class="sr">Tijd terug</span><input id="u-terugTijd" type="time" data-b="retourTijd" aria-label="Tijd terug"></label>
-                <label><span class="sr">Datum terug</span><input id="u-terugDatum" type="date" data-b="retourDatum" aria-label="Datum terug" title="Leeg laten = zelfde dag"></label>
-              </div>
-              <span class="hint">Datum leeg laten = zelfde dag terug</span>
-            </div></div>
+          <div id="retourRow" class="paper">
+            <div class="terug s2">
+              <div class="tlabel"><span>Terug</span><span class="seg mini" role="group" aria-label="Soort terugtijd"><button type="button" data-rt="vertrek">Vertrek retour</button><button type="button" data-rt="aankomst">Thuiskomst</button></span></div>
+              <input id="u-terugTijd" type="time" data-b="retourTijd" aria-label="Tijd terug">
+            </div>
+            <label class="terugdatum">Datum terug<input id="u-terugDatum" type="date" data-b="retourDatum"></label>
+          </div>
           <div id="legs" class="col" style="gap:10px"></div>
           <div class="row" id="legBtns"><button class="small" id="addLeg">Rit toevoegen</button><button class="small" id="addReturn">Retourrit toevoegen</button></div>
           <div class="leegline">
@@ -720,6 +731,10 @@ function renderOut(){
   const soort = S.soort || autoSoort(c);
   $("t-wacht").textContent = c.wacht == null ? "–" : short(c.wacht);
   $("t-arbK").textContent = c.arbeid == null ? "–" : short(c.arbeid);
+  const rs = $("ritSumText");
+  if (rs && c.legs[0]) { const l = c.legs[0];
+    rs.innerHTML = `<b>${esc(l.from || "–")} &rarr; ${esc(l.to || "–")}</b><span class="hint">${l.kmN != null ? Math.round(l.kmN) + " km" : "km onbekend"} · ${l.dur != null ? fmtDur(l.dur) + " incl. 8%" : "reistijd onbekend"}${nietAlleenNL(l.kmLand) ? " · " + landTekst(l.kmLand) : ""} · terug dezelfde route</span>`; }
+  document.querySelectorAll(".terugdatum").forEach(x => { x.hidden = !(soort === "Meerdaagse reis" || T(S.retourDatum) || c.multiDay); });
   document.querySelectorAll('[data-b="retourTijd"],[data-b="retourDatum"]').forEach(x => { if (x !== document.activeElement) x.value = x.type === "date" ? toISO(getB(x.dataset.b)) : getB(x.dataset.b); });
   document.querySelectorAll("[data-rt]").forEach(b => b.setAttribute("aria-pressed", (S.retour || S.legs.length < 2 ? S.retourType || "vertrek" : S.legs[S.legs.length - 1].type) === b.dataset.rt));
   if (0) document.querySelectorAll("[data-rt]").forEach(b => b.setAttribute("aria-pressed", (S.retourType || "vertrek") === b.dataset.rt));
@@ -743,7 +758,9 @@ function renderLegs(){
   const flag = (i, side, on) => on ? `<span class="flag" id="flag-${i}-${side}">Opgezocht via Google Maps</span>` : "";
   const shown = S.retour ? S.legs.slice(0, 1) : S.legs;
   $("f-retour").checked = !!S.retour; $("legBtns").hidden = !!S.retour;
-  $("legs").innerHTML = shown.map((l, i) => `
+  const dicht = S.retour && shown.length === 1 && !RIT_OPEN && T(shown[0].vanAdres || shown[0].vanStad) && T(shown[0].naarAdres || shown[0].naarStad);
+  if (dicht) { $("legs").innerHTML = `<div class="ritsum"><div id="ritSumText" class="col" style="gap:2px;min-width:0"></div><button type="button" class="small" id="ritOpen">Rit aanpassen</button></div>`; renderOut(); return; }
+  $("legs").innerHTML = (S.retour && shown.length === 1 && RIT_OPEN ? `<div class="row" style="justify-content:flex-end"><button type="button" class="small" id="ritDicht">Inklappen</button></div>` : "") + shown.map((l, i) => `
     <div class="leg">
       <div class="leg-head"><strong>Rit ${i + 1}</strong>
         <span class="row" style="gap:8px"><a class="maps" id="maps-${i}" target="_blank" rel="noopener">Open in Google Maps</a>
@@ -771,7 +788,11 @@ function renderLegs(){
   renderOut();
 }
 
-let LOADING = false;
+let LOADING = false, RIT_OPEN = false;
+document.addEventListener("click", e => {
+  if (e.target.id === "ritOpen") { RIT_OPEN = true; renderLegs(); }
+  else if (e.target.id === "ritDicht") { RIT_OPEN = false; renderLegs(); }
+});
 function fillFields(){
   LOADING = true;
   if (!BUSSEN[S.busWens]) S.busWens = "";
@@ -1048,7 +1069,7 @@ document.querySelectorAll("[data-b]").forEach(el => {
 function select(id){
   flushSave();
   SEL = id; const d = cur();
-  $("remoteBanner").hidden = true; $("handoffBox").hidden = true; $("claimStatus").textContent = ""; $("notesStatus").textContent = ""; $("notesStatus").classList.remove("err"); $("zoekStatus").textContent = "";
+  RIT_OPEN = false; $("remoteBanner").hidden = true; $("handoffBox").hidden = true; $("claimStatus").textContent = ""; $("notesStatus").textContent = ""; $("notesStatus").classList.remove("err"); $("zoekStatus").textContent = "";
   $("d-delConfirm").hidden = true; $("d-del").hidden = false;
   if (d) { S = normalize(d.data); loadedStamp = d.gewijzigd || null; fillKlant(); fillFields(); }
   renderMeta(); renderList(); pushPresence();
