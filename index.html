@@ -193,6 +193,15 @@ details.more[open] summary::before{transform:rotate(90deg)}
 .checks li.off{color:var(--muted)}
 .checks li.off::before{content:"\2013";color:var(--muted)}
 .me{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+
+/* adressuggesties */
+.ac{position:absolute;z-index:60;list-style:none;margin:0;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(17,28,38,.16);max-height:340px;overflow:auto}
+.ac li{padding:9px 11px;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.ac li b{font-weight:600}
+.ac li span{font-size:12.5px;color:var(--muted)}
+.ac li:hover{background:var(--sunken)}
+.ac li[aria-selected="true"]{background:var(--accent);color:var(--accent-fg)}
+.ac li[aria-selected="true"] span{color:inherit;opacity:.85}
 /* ---------- responsive ---------- */
 .assign{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) auto;gap:10px;align-items:end}
 .cols.beheer{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -371,10 +380,10 @@ details.more[open] summary::before{transform:rotate(90deg)}
               <option>Minibus</option><option>Rolstoeltouringcar</option><option>Touringcar</option><option>Touringcar XL</option>
             </select></label>
             <p class="businfo" id="t-businfo" style="align-self:end;padding-bottom:9px"></p>
-            <label class="wide">Vertrekpunt<input id="t-vertrekpunt" data-b="tel.vertrekpunt" placeholder="Adres, postcode + huisnr, of een naam zoals 'Station Goes'"></label>
+            <label class="wide">Vertrekpunt<input id="t-vertrekpunt" data-b="tel.vertrekpunt" data-ac="tel" data-side="van" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" placeholder="Adres, postcode + huisnr, of een naam zoals 'Station Goes'"></label>
             <label>Vertrektijd<input id="t-vertrektijd" type="time" data-b="leg.tijd"></label>
             <label>Thuiskomst<input id="t-thuis" type="time" data-b="tel.thuiskomst"></label>
-            <label class="wide">Bestemming<input id="t-bestemming" data-b="tel.bestemming" placeholder="Adres, of een naam zoals 'Bobbejaanland'"></label>
+            <label class="wide">Bestemming<input id="t-bestemming" data-b="tel.bestemming" data-ac="tel" data-side="naar" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" placeholder="Adres, of een naam zoals 'Bobbejaanland'"></label>
             <label class="wide">Programma<textarea id="t-programma" data-b="tel.programma" style="min-height:70px" placeholder="Wat gaat de groep doen, tussenstops, wensen"></textarea></label>
           </div>
           <div class="row"><button class="primary small" id="notesBtn" hidden>Uitwerken</button><span class="status" id="notesStatus"></span></div>
@@ -718,9 +727,9 @@ function renderLegs(){
         ${shown.length > 1 ? `<button class="small" data-del="${i}" aria-label="Rit ${i + 1} verwijderen">Verwijderen</button>` : ""}</span></div>
       <div class="grid g2">
         <label>Van: stad<input id="leg-${i}-vanStad" data-i="${i}" data-k="vanStad" value="${esc(l.vanStad)}"></label>
-        <label>Van: adres<input id="leg-${i}-vanAdres" data-i="${i}" data-k="vanAdres" value="${esc(l.vanAdres)}">${flag(i, "van", l.vanGezocht)}</label>
+        <label>Van: adres<input id="leg-${i}-vanAdres" data-i="${i}" data-k="vanAdres" data-ac="leg" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" value="${esc(l.vanAdres)}">${flag(i, "van", l.vanGezocht)}</label>
         <label>Naar: stad<input id="leg-${i}-naarStad" data-i="${i}" data-k="naarStad" value="${esc(l.naarStad)}"></label>
-        <label>Naar: adres<input id="leg-${i}-naarAdres" data-i="${i}" data-k="naarAdres" value="${esc(l.naarAdres)}">${flag(i, "naar", l.naarGezocht)}</label>
+        <label>Naar: adres<input id="leg-${i}-naarAdres" data-i="${i}" data-k="naarAdres" data-ac="leg" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" value="${esc(l.naarAdres)}">${flag(i, "naar", l.naarGezocht)}</label>
       </div>
       <div class="grid g4">
         <label>Datum${i ? " (leeg = zelfde dag)" : ""}<input type="date" id="leg-${i}-datum" data-i="${i}" data-k="datum" value="${esc(toISO(l.datum))}"></label>
@@ -1221,12 +1230,14 @@ function verwerkUitlezing(d){
           leegGeschat:!!(lH || lT || lHD || lTD), retour, retourTijd:rT, retourDatum:rD, legs: legs.length ? legs : [emptyLeg()]};
 }
 /* adressen en afstanden van één rit ophalen via Google Maps (server) */
-let zoekTimer = null, zoekNr = 0;
+let zoekTimer = null, zoekNr = 0, laatsteZoek = {};
 function zoekRit(i){ clearTimeout(zoekTimer); zoekTimer = setTimeout(() => doeZoek(i), 300); }
 async function doeZoek(i){
   const L0 = S.legs[i]; if (!L0 || !CFG.google) return;
   const van = placeQ(L0, "van"), naar = placeQ(L0, "naar");
   if (!T(van) || !T(naar)) return;
+  const sleutel = SEL + "|" + i + "|" + van + "|" + naar + "|" + S.leegAfw + "|" + S.retour;
+  if (laatsteZoek[i] === sleutel) return;          // zelfde rit al opgehaald: geen dubbele Google-aanvraag
   const id = SEL, nr = ++zoekNr, st = $("zoekStatus"); st.textContent = "Adressen en afstanden ophalen…";
   try {
     const d = await api("/api/rit", {method: "POST", body: JSON.stringify({van, naar, leegHeen: i === 0 && !S.leegAfw, leegTerug: i === S.legs.length - 1 && !S.retour && !S.leegAfw})});
@@ -1243,10 +1254,65 @@ async function doeZoek(i){
       if (d.leegHeenKm > 0) { S.leegHeen = String(d.leegHeenKm); S.leegHeenDuur = hm(d.leegHeenMin); S.leegGeschat = true; }
       if (d.leegTerugKm > 0) { S.leegTerug = String(d.leegTerugKm); S.leegTerugDuur = hm(d.leegTerugMin); }
     }
+    laatsteZoek[i] = SEL + "|" + i + "|" + placeQ(L, "van") + "|" + placeQ(L, "naar") + "|" + S.leegAfw + "|" + S.retour;
     fillFields(); scheduleSave();
     st.textContent = d.van?.gevonden && d.naar?.gevonden ? "Opgehaald via Google Maps." : "Niet elk adres gevonden. Vul het zelf aan.";
   } catch (e) { if (nr === zoekNr) st.textContent = "Ophalen lukte niet: " + e.message; }
 }
+
+
+/* adressuggesties terwijl je typt (Google Places) */
+function pasToe(el, s, p){
+  if (el.dataset.ac === "tel") {
+    const side = el.dataset.side, L = S.legs[0];
+    S.tel[side === "van" ? "vertrekpunt" : "bestemming"] = s.tekst;
+    if (p) { L[side + "Adres"] = p.adres; L[side + "Stad"] = p.stad; L[side + "Locatie"] = ""; L[side + "Gezocht"] = true; }
+    renderLegs(); zoekRit(0);
+  } else {
+    const i = +el.dataset.i, side = el.dataset.k.startsWith("van") ? "van" : "naar", L = S.legs[i]; if (!L) return;
+    if (p) { L[side + "Adres"] = p.adres; L[side + "Stad"] = p.stad; L[side + "Locatie"] = ""; L[side + "Gezocht"] = true; }
+    else L[side + "Adres"] = s.tekst;
+    fillFields(); zoekRit(i);
+  }
+  scheduleSave();
+}
+const AC = (() => {
+  const ul = document.createElement("ul"); ul.id = "ac"; ul.className = "ac"; ul.setAttribute("role", "listbox"); ul.hidden = true; document.body.appendChild(ul);
+  let input = null, items = [], act = -1, timer = null, nr = 0, sessie = null;
+  const nieuweSessie = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
+  function plaats(){ const r = input.getBoundingClientRect(); ul.style.left = (r.left + scrollX) + "px"; ul.style.top = (r.bottom + scrollY + 4) + "px"; ul.style.width = Math.min(Math.max(r.width, 280), innerWidth - 32) + "px"; }
+  function toon(){
+    if (!items.length || !input) { sluit(); return; }
+    ul.innerHTML = items.map((x, i) => `<li role="option" id="ac-${i}" data-i="${i}" aria-selected="${i === act}"><b>${esc(x.hoofd)}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ""}</li>`).join("");
+    plaats(); ul.hidden = false; input.setAttribute("aria-expanded", "true");
+    if (act >= 0) { input.setAttribute("aria-activedescendant", "ac-" + act); $("ac-" + act)?.scrollIntoView({block: "nearest"}); } else input.removeAttribute("aria-activedescendant");
+  }
+  function sluit(){ ul.hidden = true; items = []; act = -1; input?.setAttribute("aria-expanded", "false"); input?.removeAttribute("aria-activedescendant"); }
+  async function zoek(){
+    const el = input, q = T(el?.value); if (!el || q.length < 3 || !CFG.google) { sluit(); return; }
+    if (!sessie) sessie = nieuweSessie(); const n = ++nr;
+    try { const r = await api("/api/suggesties?q=" + encodeURIComponent(q) + "&s=" + sessie); if (n !== nr || el !== input || document.activeElement !== el) return; items = r; act = -1; toon(); }
+    catch (e) { sluit(); }
+  }
+  async function kies(i){
+    const x = items[i], el = input; if (!x) return; sluit(); el.value = x.tekst; ++nr;
+    let p = null; try { p = await api("/api/plek?id=" + encodeURIComponent(x.id) + "&s=" + (sessie || "")); } catch (e) {}
+    sessie = null; pasToe(el, x, p);
+  }
+  document.addEventListener("input", e => { const el = e.target; if (!el.dataset?.ac) return; input = el; clearTimeout(timer); timer = setTimeout(zoek, 220); });
+  document.addEventListener("keydown", e => {
+    if (ul.hidden || e.target !== input) return;
+    if (e.key === "ArrowDown") { act = Math.min(items.length - 1, act + 1); toon(); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { act = Math.max(0, act - 1); toon(); e.preventDefault(); }
+    else if (e.key === "Enter" && act >= 0) { e.preventDefault(); kies(act); }
+    else if (e.key === "Escape") sluit();
+  });
+  ul.addEventListener("mousedown", e => { const li = e.target.closest("li"); if (li) { e.preventDefault(); kies(+li.dataset.i); } });
+  document.addEventListener("focusout", e => { if (e.target === input) setTimeout(() => { if (document.activeElement !== input) sluit(); }, 150); });
+  addEventListener("resize", () => { if (!ul.hidden) plaats(); });
+  addEventListener("scroll", () => { if (!ul.hidden) plaats(); }, true);
+  return {sluit};
+})();
 
 /* postcode + huisnummer => straat en plaats */
 async function zoekPostcode(waar){
