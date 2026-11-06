@@ -1,5 +1,5 @@
 // GET /api/suggesties?q=bobbej&s=<sessie>  => adressuggesties terwijl je typt (Google Places Autocomplete)
-import {stuur, fout, ingelogd, env} from "./_lib/server.js";
+import {stuur, fout, ingelogd, env, siteUrl} from "./_lib/server.js";
 export default async function handler(req, res) {
   try {
     await ingelogd(req);
@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     if (/^[a-zA-Z0-9-]{8,}$/.test(String(req.query.s || ""))) body.sessionToken = req.query.s;
     const r = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
       method: "POST",
-      headers: {"Content-Type": "application/json", "X-Goog-Api-Key": env("GOOGLE_MAPS_API_KEY")},
+      headers: {"Content-Type": "application/json", "X-Goog-Api-Key": env("GOOGLE_MAPS_API_KEY"), Referer: siteUrl()},
       body: JSON.stringify(body)
     });
     if (!r.ok) throw Object.assign(new Error("Google Places: " + r.status + " " + (await r.text()).slice(0, 200)), {status: 502});

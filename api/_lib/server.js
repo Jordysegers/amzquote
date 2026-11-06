@@ -44,3 +44,10 @@ export function body(req) {
   if (req.body && typeof req.body === "object") return req.body;
   try { return JSON.parse(req.body || "{}"); } catch { return {}; }
 }
+
+// Adres van de site. Google-sleutels met een websitebeperking (HTTP referrer) accepteren alleen
+// aanvragen die dit adres meesturen; vanaf de server sturen we het daarom zelf mee.
+export function siteUrl() {
+  const h = process.env.SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL || "amzquote.vercel.app";
+  return (h.startsWith("http") ? h : "https://" + h).replace(/\/?$/, "/");
+}

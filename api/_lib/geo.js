@@ -1,5 +1,5 @@
 // Adressen en routes: api-postcode.nl en Google Maps (Places + Routes).
-import {env} from "./server.js";
+import {env, siteUrl} from "./server.js";
 
 export const VESTIGING = "Quistenburg 8, 4454 PZ Borssele";
 const PC = /^\s*(\d{4})\s?([a-zA-Z]{2})[\s,]+(\d+)\s*([a-zA-Z]{0,4}|-\s?\w+)?\s*$/;
@@ -26,7 +26,7 @@ export async function zoekPlek(tekst) {
   if (m) { const p = await postcode(m[1] + m[2], m[3] + (m[4] || "")).catch(() => null); if (p) return p; }
   const r = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
-    headers: {"Content-Type": "application/json", "X-Goog-Api-Key": env("GOOGLE_MAPS_API_KEY"),
+    headers: {"Content-Type": "application/json", "X-Goog-Api-Key": env("GOOGLE_MAPS_API_KEY"), Referer: siteUrl(),
               "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.addressComponents,places.location"},
     body: JSON.stringify({textQuery: tekst, languageCode: "nl", regionCode: "NL", maxResultCount: 1})
   });
@@ -54,7 +54,7 @@ const punt = p => p && p.lat != null ? {location: {latLng: {latitude: p.lat, lon
 export async function route(van, naar, startLand) {
   const r = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
     method: "POST",
-    headers: {"Content-Type": "application/json", "X-Goog-Api-Key": env("GOOGLE_MAPS_API_KEY"),
+    headers: {"Content-Type": "application/json", "X-Goog-Api-Key": env("GOOGLE_MAPS_API_KEY"), Referer: siteUrl(),
               "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.legs.steps.distanceMeters,routes.legs.steps.navigationInstruction.instructions"},
     body: JSON.stringify({origin: punt(van), destination: punt(naar), travelMode: "DRIVE", routingPreference: "TRAFFIC_UNAWARE",
                           languageCode: "en-US", units: "METRIC"})
