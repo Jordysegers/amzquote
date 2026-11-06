@@ -696,7 +696,17 @@ function buildText(c){
     L.push(fmtTime(l.dep) + "\tVertrek vanuit " + (l.from || "[stad], [adres]"));
     L.push(fmtTime(l.arr) + "\tAankomst in " + (l.to || "[stad], [adres]"));
   });
+  const zin = busZin(c.bus);
+  if (zin) L.push("", zin);
   return L.join("\n");
+}
+// Vaste zin onder het reisschema, afhankelijk van de bus
+function busZin(bus){
+  const b = String(bus || "").toLowerCase();
+  if (b.includes("minibus")) return "U reist met een luxe en comfortabele 19-persoons minibus, voorzien van onder andere USB-oplaadpunten op iedere zitplaats en airconditioning.";
+  if (b.includes("dubbeldekker")) return "U reist met een luxe en comfortabele dubbeldekker, voorzien van USB-oplaadpoorten, toilet en airconditioning.";
+  if (["standaard touringcar", "touringcar", "58-er", "touringcar xl"].includes(b)) return "U reist met een luxe en comfortabele touringcar, voorzien van USB-oplaadpoorten, toilet en airconditioning.";
+  return "";
 }
 
 /* ---------- weergave ---------- */
