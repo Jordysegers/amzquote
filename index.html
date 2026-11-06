@@ -221,6 +221,7 @@ details.more[open] summary::before{transform:rotate(90deg)}
 .seg.mini{padding:2px;flex-wrap:nowrap}
 .seg.mini button{font-size:11.5px;padding:2px 7px}
 #retourRow{background:var(--sunken);border-radius:10px;padding:10px 12px}
+.leg .seg{flex-wrap:nowrap}
 .ritsum{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--sunken);border-radius:10px;padding:10px 12px;font-size:14px;flex-wrap:wrap}
 @media (max-width:700px){.paper{grid-template-columns:repeat(2,minmax(0,1fr))}.paper .s2{grid-column:span 2}}
 @media (max-width:480px){.paper{grid-template-columns:minmax(0,1fr)}.paper .s2{grid-column:auto}}
@@ -732,7 +733,8 @@ function renderOut(){
   $("t-wacht").textContent = c.wacht == null ? "–" : short(c.wacht);
   $("t-arbK").textContent = c.arbeid == null ? "–" : short(c.arbeid);
   const rs = $("ritSumText");
-  if (rs && c.legs[0]) { const l = c.legs[0];
+  if (rs && c.legs[0] && !(c.legs[0].from && c.legs[0].to)) rs.innerHTML = `<b>Nog geen route</b><span class="hint">${cur()?.bron === "Telefoon" ? "Vul hierboven vertrekpunt en bestemming in, dan wordt de rit vanzelf opgehaald." : "Klik op Rit aanpassen om vertrek en bestemming in te vullen."}</span>`;
+  else if (rs && c.legs[0]) { const l = c.legs[0];
     rs.innerHTML = `<b>${esc(l.from || "–")} &rarr; ${esc(l.to || "–")}</b><span class="hint">${l.kmN != null ? Math.round(l.kmN) + " km" : "km onbekend"} · ${l.dur != null ? fmtDur(l.dur) + " incl. 8%" : "reistijd onbekend"}${nietAlleenNL(l.kmLand) ? " · " + landTekst(l.kmLand) : ""} · terug dezelfde route</span>`; }
   document.querySelectorAll(".terugdatum").forEach(x => { x.hidden = !(soort === "Meerdaagse reis" || T(S.retourDatum) || c.multiDay); });
   document.querySelectorAll('[data-b="retourTijd"],[data-b="retourDatum"]').forEach(x => { if (x !== document.activeElement) x.value = x.type === "date" ? toISO(getB(x.dataset.b)) : getB(x.dataset.b); });
@@ -758,7 +760,7 @@ function renderLegs(){
   const flag = (i, side, on) => on ? `<span class="flag" id="flag-${i}-${side}">Opgezocht via Google Maps</span>` : "";
   const shown = S.retour ? S.legs.slice(0, 1) : S.legs;
   $("f-retour").checked = !!S.retour; $("legBtns").hidden = !!S.retour;
-  const dicht = S.retour && shown.length === 1 && !RIT_OPEN && T(shown[0].vanAdres || shown[0].vanStad) && T(shown[0].naarAdres || shown[0].naarStad);
+  const dicht = S.retour && shown.length === 1 && !RIT_OPEN;
   if (dicht) { $("legs").innerHTML = `<div class="ritsum"><div id="ritSumText" class="col" style="gap:2px;min-width:0"></div><button type="button" class="small" id="ritOpen">Rit aanpassen</button></div>`; renderOut(); return; }
   $("legs").innerHTML = (S.retour && shown.length === 1 && RIT_OPEN ? `<div class="row" style="justify-content:flex-end"><button type="button" class="small" id="ritDicht">Inklappen</button></div>` : "") + shown.map((l, i) => `
     <div class="leg">
