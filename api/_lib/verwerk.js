@@ -41,10 +41,10 @@ export async function naarAanvraag(d) {
   }
 
   // Gewone retour => één rit met vinkje "terugweg is hetzelfde"
-  let retour = false, rT = "", rD = "";
+  let retour = false, rT = "", rD = "", rType = "vertrek";
   if (legs.length === 2) {
     const [a, b] = legs, q = (l, s) => ["Adres","Stad"].map(f => T(l[s + f]).toLowerCase()).join("|");
-    if (q(b, "van") === q(a, "naar") && q(b, "naar") === q(a, "van") && b.type === "vertrek") { retour = true; rT = b.tijd; rD = b.datum === a.datum ? "" : b.datum; legs = [a]; }
+    if (q(b, "van") === q(a, "naar") && q(b, "naar") === q(a, "van")) { retour = true; rT = b.tijd; rType = b.type; rD = b.datum === a.datum ? "" : b.datum; legs = [a]; }
   }
   const k = {}; for (const f of ["naam","bedrijf","adres","postcodePlaats","telefoon","email"]) k[f] = str(d?.klant?.[f]);
   return {
@@ -54,7 +54,7 @@ export async function naarAanvraag(d) {
     tel: {vertrekpunt:"", bestemming:"", thuiskomst:"", programma:""},
     leegHeen: d._lh ? String(d._lh) : "", leegHeenDuur: d._lhm ? hm(d._lhm) : "",
     leegTerug: !retour && d._lt ? String(d._lt) : "", leegTerugDuur: !retour && d._ltm ? hm(d._ltm) : "",
-    leegGeschat: !!d._lh, leegAfw: false, retour, retourTijd: rT, retourDatum: rD,
+    leegGeschat: !!d._lh, leegAfw: false, retour, retourType: rType, retourTijd: rT, retourDatum: rD,
     legs: legs.length ? legs : [leeg()]
   };
 }

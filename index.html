@@ -202,6 +202,13 @@ details.more[open] summary::before{transform:rotate(90deg)}
 .ac li:hover{background:var(--sunken)}
 .ac li[aria-selected="true"]{background:var(--accent);color:var(--accent-fg)}
 .ac li[aria-selected="true"] span{color:inherit;opacity:.85}
+
+.flabel{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:5px}
+.terug{display:flex;flex-direction:column;gap:8px}
+.seg.mini button{font-size:12.5px;padding:4px 10px}
+.totals small.sub{display:block;font:500 11.5px var(--body);color:var(--muted);margin-top:2px}
+.right .totals{grid-template-columns:repeat(2,minmax(0,1fr))}
+#retourRow{background:var(--sunken);border-radius:10px;padding:10px 12px}
 /* ---------- responsive ---------- */
 .assign{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) auto;gap:10px;align-items:end}
 .cols.beheer{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -382,7 +389,14 @@ details.more[open] summary::before{transform:rotate(90deg)}
             <p class="businfo" id="t-businfo" style="align-self:end;padding-bottom:9px"></p>
             <label class="wide">Vertrekpunt<input id="t-vertrekpunt" data-b="tel.vertrekpunt" data-ac="tel" data-side="van" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" placeholder="Adres, postcode + huisnr, of een naam zoals 'Station Goes'"></label>
             <label>Vertrektijd<input id="t-vertrektijd" type="time" data-b="leg.tijd"></label>
-            <label>Thuiskomst<input id="t-thuis" type="time" data-b="tel.thuiskomst"></label>
+            <div class="wide"><span class="flabel">Terug</span><div class="terug">
+              <span class="seg mini" role="group" aria-label="Soort terugtijd"><button type="button" data-rt="vertrek">Vertrek retour</button><button type="button" data-rt="aankomst">Thuiskomst</button></span>
+              <div class="grid g2">
+                <label><span class="sr">Tijd terug</span><input id="t-terugTijd" type="time" data-b="retourTijd" aria-label="Tijd terug"></label>
+                <label><span class="sr">Datum terug</span><input id="t-terugDatum" type="date" data-b="retourDatum" aria-label="Datum terug" title="Leeg laten = zelfde dag"></label>
+              </div>
+              <span class="hint">Datum leeg laten = zelfde dag terug</span>
+            </div></div>
             <label class="wide">Bestemming<input id="t-bestemming" data-b="tel.bestemming" data-ac="tel" data-side="naar" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" placeholder="Adres, of een naam zoals 'Bobbejaanland'"></label>
             <label class="wide">Programma<textarea id="t-programma" data-b="tel.programma" style="min-height:70px" placeholder="Wat gaat de groep doen, tussenstops, wensen"></textarea></label>
           </div>
@@ -413,6 +427,14 @@ details.more[open] summary::before{transform:rotate(90deg)}
         <section>
           <div class="row" style="justify-content:space-between"><h2>Uitwerking</h2><span class="status" id="zoekStatus"></span></div>
           <label class="check"><input type="checkbox" id="f-retour"> Terugweg is hetzelfde als de heenweg</label>
+          <div id="retourRow"><div class="terug">
+              <span class="seg mini" role="group" aria-label="Soort terugtijd"><button type="button" data-rt="vertrek">Vertrek retour</button><button type="button" data-rt="aankomst">Thuiskomst</button></span>
+              <div class="grid g2">
+                <label><span class="sr">Tijd terug</span><input id="u-terugTijd" type="time" data-b="retourTijd" aria-label="Tijd terug"></label>
+                <label><span class="sr">Datum terug</span><input id="u-terugDatum" type="date" data-b="retourDatum" aria-label="Datum terug" title="Leeg laten = zelfde dag"></label>
+              </div>
+              <span class="hint">Datum leeg laten = zelfde dag terug</span>
+            </div></div>
           <div id="legs" class="col" style="gap:10px"></div>
           <div class="row" id="legBtns"><button class="small" id="addLeg">Rit toevoegen</button><button class="small" id="addReturn">Retourrit toevoegen</button></div>
           <div class="leegline">
@@ -448,6 +470,8 @@ details.more[open] summary::before{transform:rotate(90deg)}
             <div><span>Vertrek stalling</span><b id="t-uit">–</b></div>
             <div><span>Terug in stalling</span><b id="t-in">–</b></div>
             <div><span>Leegrit (tijd)</span><b id="t-leeg">–</b></div>
+            <div><span>Wachttijd</span><b id="t-wacht">–</b></div>
+            <div><span>Chauffeur-arbeid klant</span><b id="t-arbK">–</b></div>
             <div><span>Chauffeur-arbeid incl. leegrit</span><b id="t-arb">–</b></div>
           </div>
           <div class="lands" id="t-land"></div>
@@ -455,7 +479,6 @@ details.more[open] summary::before{transform:rotate(90deg)}
           <a class="maps" id="m-route" target="_blank" rel="noopener">Passagiersroute openen in Google Maps</a>
         </section>
         <div class="facts">
-          <section class="plain"><h2>Samenvatting</h2><dl class="sum" id="sum"></dl></section>
           <section class="plain" id="checksBox"><h2>Extra wensen</h2><ul class="checks" id="checks"></ul></section>
           <section class="plain" id="needBox"><h2>Nog nodig</h2><ul class="checks warns" id="needList"></ul></section>
         </div>
@@ -578,7 +601,7 @@ const VOORSTAAN = 10;   // minuten vóór het eerste vertrek bij de klant voorst
 function effLegs(){
   if (!S.retour || !S.legs.length) return S.legs;
   const a = S.legs[0], b = emptyLeg(); cp(b, "van", a, "naar"); cp(b, "naar", a, "van");
-  b.km = a.km; b.duur = a.duur; b.kmLand = a.kmLand; b.kmGeschat = a.kmGeschat; b.tijd = S.retourTijd || ""; b.datum = S.retourDatum || "";
+  b.km = a.km; b.duur = a.duur; b.kmLand = a.kmLand; b.kmGeschat = a.kmGeschat; b.tijd = S.retourTijd || ""; b.type = S.retourType === "aankomst" ? "aankomst" : "vertrek"; b.datum = S.retourDatum || "";
   return [a, b];
 }
 
@@ -694,13 +717,13 @@ function renderOut(){
     : c.auto ? "Bus: <b>" + esc(c.auto) + "</b> (voordeligste optie voor " + c.n + " personen)"
     : isNaN(c.n) ? "Vul het aantal personen in, dan wordt de voordeligste bus gekozen."
     : "Geen bus in het schema voor " + c.n + " personen.";
-  const kmS = v => v == null ? "–" : v + " km", du = v => v == null ? "–" : fmtDur(v);
-  const rows = [["Datum", (c.first && c.first.dateEff) || "–"]];
-  if (c.multiDay) rows.push(["Retour", c.last.dateEff || "–"]);
   const soort = S.soort || autoSoort(c);
-  rows.push(["Passagiers", S.pax.trim() || "–"], ["Bus", c.bus || "–"], ["Soort", soort + (S.soort ? "" : " (herkend)")], null,
-            ["Passagiers-km", kmS(c.paxKm)], ["Lege km", kmS(c.leegKm)], null, ["Wachttijd", du(c.wacht)], ["Chauffeur-arbeid klant", du(c.arbeid)]);
-  $("sum").innerHTML = rows.map(r => r ? "<dt>" + r[0] + "</dt><dd>" + esc(r[1]) + "</dd>" : '<div class="gap"></div>').join("");
+  $("t-wacht").textContent = c.wacht == null ? "–" : short(c.wacht);
+  $("t-arbK").textContent = c.arbeid == null ? "–" : short(c.arbeid);
+  document.querySelectorAll('[data-b="retourTijd"],[data-b="retourDatum"]').forEach(x => { if (x !== document.activeElement) x.value = x.type === "date" ? toISO(getB(x.dataset.b)) : getB(x.dataset.b); });
+  document.querySelectorAll("[data-rt]").forEach(b => b.setAttribute("aria-pressed", (S.retour || S.legs.length < 2 ? S.retourType || "vertrek" : S.legs[S.legs.length - 1].type) === b.dataset.rt));
+  if (0) document.querySelectorAll("[data-rt]").forEach(b => b.setAttribute("aria-pressed", (S.retourType || "vertrek") === b.dataset.rt));
+  $("retourRow").hidden = !S.retour || (cur()?.bron === "Telefoon");
   $("t-land").innerHTML = c.landKm && nietAlleenNL(c.landKm) ? "Passagiers-km per land: " + landTekst(c.landKm) : ""; $("t-land").hidden = !$("t-land").innerHTML;
   document.querySelectorAll("#soortSeg button").forEach(b => { b.setAttribute("aria-pressed", b.dataset.soort === soort); b.title = !S.soort && b.dataset.soort === soort ? "Automatisch herkend" : ""; });
   $("leegFields").hidden = !S.leegAfw; $("f-leegAfw").checked = !!S.leegAfw;
@@ -744,15 +767,7 @@ function renderLegs(){
         <label>Reistijd Maps (u:mm)<input id="leg-${i}-duur" data-i="${i}" data-k="duur" placeholder="1:35" value="${esc(l.duur)}"></label>
       </div>
       <div class="leg-calc" id="calc-${i}"></div>
-    </div>`).join("") + (S.retour ? `
-    <div class="leg">
-      <div class="leg-head"><strong>Terugrit</strong><span class="hint">Omgekeerde route van rit 1, met dezelfde afstand en reistijd</span></div>
-      <div class="grid g4">
-        <label>Vertrek terug<input type="time" id="f-retourTijd" data-r="retourTijd" value="${esc(S.retourTijd)}"></label>
-        <label>Datum terug (leeg = zelfde dag)<input type="date" id="f-retourDatum" data-r="retourDatum" value="${esc(toISO(S.retourDatum))}"></label>
-      </div>
-      <div class="leg-calc" id="calc-1"></div>
-    </div>` : "");
+    </div>`).join("");
   renderOut();
 }
 
@@ -789,8 +804,13 @@ $("legs").addEventListener("click", e => {
   if (d.del != null) { S.legs.splice(+d.del, 1); touch(); renderLegs(); }
   else if (d.type) { S.legs[+d.i].type = d.type; touch(); renderLegs(); }
 });
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-rt]"); if (!b) return;
+  if (S.retour || S.legs.length < 2) S.retourType = b.dataset.rt; else S.legs[S.legs.length - 1].type = b.dataset.rt;
+  fillFields(); scheduleSave();
+});
 $("f-retour").addEventListener("change", e => {
-  if (e.target.checked) { const b = S.legs[1]; if (b) { S.retourTijd = b.type === "vertrek" ? b.tijd : ""; S.retourDatum = b.datum; } S.legs = S.legs.slice(0, 1); S.retour = true; }
+  if (e.target.checked) { const b = S.legs[1]; if (b) { S.retourTijd = b.tijd; S.retourType = b.type; S.retourDatum = b.datum; } S.legs = S.legs.slice(0, 1); S.retour = true; }
   else { S.legs = effLegs().map(l => ({...l})); S.retour = false; }
   touch(); renderLegs();
 });
@@ -807,7 +827,7 @@ $("copyBtn").onclick = async () => {
 
 
 /* ---------- aanvragen: opslag, spoed, toewijzen ---------- */
-const EMPTY = () => ({klant:emptyKlant(),pax:"",busWens:"",wensen:"",nodig:"",notities:"",tel:{vertrekpunt:"",bestemming:"",thuiskomst:"",programma:""},leegHeen:"",leegTerug:"",leegHeenDuur:"",leegTerugDuur:"",leegGeschat:false,retour:true,retourTijd:"",retourDatum:"",legs:[emptyLeg()]});
+const EMPTY = () => ({klant:emptyKlant(),pax:"",busWens:"",wensen:"",nodig:"",notities:"",tel:{vertrekpunt:"",bestemming:"",thuiskomst:"",programma:""},leegHeen:"",leegTerug:"",leegHeenDuur:"",leegTerugDuur:"",leegGeschat:false,retour:true,retourType:"vertrek",retourTijd:"",retourDatum:"",legs:[emptyLeg()]});
 const normalize = d => { const s = Object.assign(EMPTY(), JSON.parse(JSON.stringify(d || {}))); s.klant = Object.assign(emptyKlant(), s.klant); s.tel = Object.assign({vertrekpunt:"",bestemming:"",thuiskomst:"",programma:""}, s.tel); s.legs = (Array.isArray(s.legs) && s.legs.length ? s.legs : [emptyLeg()]).map(l => Object.assign(emptyLeg(), l)); delete s.request; delete s.example; return s; };
 const DEF_SET = {collegas:[], spoedKlanten:"", spoedDagen:14, spoedPax:150};
 const PALET = ["#0b7a5a","#c2410c","#7c3aed","#0e7490","#be185d","#4d7c0f","#b45309","#1d4ed8"];
@@ -997,13 +1017,20 @@ function renderMeta(){
   $("notesBox").hidden = d.bron !== "Telefoon"; $("klantBox").hidden = d.bron === "Telefoon";
   $("tel-dd").textContent = new Date(d.ontvangen).toLocaleDateString("nl-NL", {day:"2-digit", month:"2-digit", year:"numeric"}).replace(/\//g, "-");
 }
-function getB(p){ const [a, b] = p.split("."); if (a === "klant") return S.klant[b] || ""; if (a === "leg") return S.legs[0]?.[b] || ""; if (a === "tel") return S.tel?.[b] || ""; return S[a] || ""; }
-function setB(p, v){ if (p === "leg.datum") v = fmtDate(v); const [a, b] = p.split("."); if (a === "klant") S.klant[b] = v; else if (a === "leg") S.legs[0][b] = v; else if (a === "tel") S.tel[b] = v; else S[a] = v; }
+function getB(p){
+  const z = S.legs[S.legs.length - 1];
+  if (p === "retourTijd") return S.retour || S.legs.length < 2 ? S.retourTijd || "" : z.tijd || "";
+  if (p === "retourDatum") return S.retour || S.legs.length < 2 ? S.retourDatum || "" : z.datum || "";
+  const [a, b] = p.split("."); if (a === "klant") return S.klant[b] || ""; if (a === "leg") return S.legs[0]?.[b] || ""; if (a === "tel") return S.tel?.[b] || ""; return S[a] || ""; }
+function setB(p, v){
+  if (p === "leg.datum" || p === "retourDatum") v = fmtDate(v);
+  if ((p === "retourTijd" || p === "retourDatum") && !S.retour && S.legs.length > 1) { S.legs[S.legs.length - 1][p === "retourTijd" ? "tijd" : "datum"] = v; renderLegs(); return; } const [a, b] = p.split("."); if (a === "klant") S.klant[b] = v; else if (a === "leg") S.legs[0][b] = v; else if (a === "tel") S.tel[b] = v; else S[a] = v; }
 function fillKlant(){ for (const k of Object.keys(emptyKlant())) $("k-" + k).value = S.klant[k] || ""; document.querySelectorAll("[data-b]").forEach(el => { el.value = el.type === "date" ? toISO(getB(el.dataset.b)) : getB(el.dataset.b); el.removeAttribute("aria-invalid"); }); }
 document.querySelectorAll("[data-b]").forEach(el => {
   el.addEventListener("input", e => {
     const p = e.target.dataset.b; setB(p, e.target.value);
     if (p === "pax") $("f-pax").value = S.pax;
+    if (p === "retourTijd" || p === "retourDatum") document.querySelectorAll(`[data-b="${p}"]`).forEach(x => { if (x !== e.target) x.value = x.type === "date" ? toISO(getB(p)) : getB(p); });
     if (p === "busWens") $("f-busWens").value = S.busWens;
     if (p === "leg.datum" && $("leg-0-datum")) $("leg-0-datum").value = toISO(S.legs[0].datum);
     if (p === "leg.tijd" && $("leg-0-tijd")) $("leg-0-tijd").value = S.legs[0].tijd;
@@ -1346,7 +1373,7 @@ $("pasteBtn").onclick = async () => {
 $("notesBtn").onclick = async () => {
   const st = $("notesStatus"), id = SEL, k = S.klant, t = S.tel, l0 = S.legs[0] || {};
   const regels = [["Naam klant", k.bedrijf], ["T.a.v.", k.naam], ["Adres", k.adres], ["Woonplaats", k.postcodePlaats], ["Telefoon", k.telefoon], ["E-mail", k.email],
-    ["Datum rit", l0.datum], ["Vertrekpunt", t.vertrekpunt], ["Vertrektijd", l0.tijd], ["Thuiskomst (gewenste aankomsttijd terug bij het vertrekpunt)", t.thuiskomst],
+    ["Datum rit", l0.datum], ["Vertrekpunt", t.vertrekpunt], ["Vertrektijd", l0.tijd], [(S.retourType === "aankomst" ? "Thuiskomst (gewenste aankomsttijd terug bij het vertrekpunt)" : "Vertrek retour (vertrektijd terug vanaf de bestemming)"), S.retourTijd || t.thuiskomst],
     ["Bestemming", t.bestemming], ["Aantal personen", S.pax], ["Bustype", S.busWens], ["Programma", t.programma]].filter(r => T(r[1]));
   if (!T(t.vertrekpunt) && !T(t.bestemming)) { st.textContent = "Vul eerst minimaal het vertrekpunt en de bestemming in."; return; }
   $("notesBtn").disabled = true; st.textContent = "Bezig met uitwerken…";
